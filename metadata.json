@@ -1,0 +1,8 @@
+{
+  "name": "SAO Sistema",
+  "description": "A professional ERP dashboard for managing entries, inventory, and social assistance, inspired by the SAO layout.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

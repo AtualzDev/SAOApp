@@ -15,6 +15,7 @@ import BeneficiaryTable from './components/BeneficiaryTable';
 import BeneficiaryForm from './components/BeneficiaryForm';
 import AuditPage from './components/AuditPage';
 import SocialAssistanceModule from './components/SocialAssistanceModule';
+import StockDashboard from './components/StockDashboard';
 import NotificationPopover from './components/NotificationPopover';
 import LoginPage from './components/LoginPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
@@ -67,8 +68,26 @@ const App: React.FC = () => {
       return <Agenda />;
     }
 
-    if (activeTab === 'assistencia') {
-      return <SocialAssistanceModule />;
+    // Lógica para o Estoque (Se for o item pai ou dashboard específico)
+    if (activeTab === 'estoque' || activeTab === 'estoque-visao-geral') {
+      return <StockDashboard />;
+    }
+
+    // Mapeamento de submenus de Assistência Social
+    const socialAssistanceTabs = ['assistencia', 'soc-visao-geral', 'soc-historico', 'soc-solicitacoes', 'soc-acompanhamento'];
+    if (socialAssistanceTabs.includes(activeTab)) {
+      let subTab: any = 'visao-geral';
+      if (activeTab === 'soc-historico') subTab = 'historico';
+      if (activeTab === 'soc-solicitacoes') subTab = 'solicitacoes';
+      if (activeTab === 'soc-acompanhamento') subTab = 'acompanhamento-externo';
+      
+      return <SocialAssistanceModule initialTab={subTab} onTabChange={(newTab) => {
+        let newId = 'soc-visao-geral';
+        if (newTab === 'historico') newId = 'soc-historico';
+        if (newTab === 'solicitacoes') newId = 'soc-solicitacoes';
+        if (newTab === 'acompanhamento-externo') newId = 'soc-acompanhamento';
+        setActiveTab(newId);
+      }} />;
     }
 
     if (activeTab === 'auditoria') {

@@ -28,7 +28,7 @@ import SocialRequestDetailsModal from './SocialRequestDetailsModal';
 import CancelRequestModal from './CancelRequestModal';
 import BeneficiaryServiceHubModal from './BeneficiaryServiceHubModal';
 
-type SubTab = 'visao-geral' | 'solicitacoes' | 'acompanhamento-externo' | 'historico';
+export type SubTab = 'visao-geral' | 'solicitacoes' | 'acompanhamento-externo' | 'historico';
 
 interface Request {
   id: string;
@@ -47,8 +47,13 @@ interface Beneficiary {
   contato: string;
 }
 
-const SocialAssistanceModule: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('visao-geral');
+interface SocialAssistanceModuleProps {
+  initialTab?: SubTab;
+  onTabChange?: (tab: SubTab) => void;
+}
+
+const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initialTab = 'visao-geral', onTabChange }) => {
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialTab);
   const [historySearch, setHistorySearch] = useState('');
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -62,6 +67,16 @@ const SocialAssistanceModule: React.FC = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Sincroniza o estado interno se a prop initialTab mudar via sidebar
+  useEffect(() => {
+    setActiveSubTab(initialTab);
+  }, [initialTab]);
+
+  const handleTabChange = (tab: SubTab) => {
+    setActiveSubTab(tab);
+    if (onTabChange) onTabChange(tab);
+  };
 
   const mockBeneficiaries: Beneficiary[] = [
     { id: '1', nome: 'Maria Auxiliadora dos Santos', status: 'Assistido', cpf: '745.659.076-15', contato: '(31) 9 9846.5342' },
@@ -165,7 +180,7 @@ const SocialAssistanceModule: React.FC = () => {
         <div className="lg:col-span-8 bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-lg font-bold text-slate-800">Linha do Tempo Social</h2>
-            <button onClick={() => setActiveSubTab('historico')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline group">Ver histórico completo <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" /></button>
+            <button onClick={() => handleTabChange('historico')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline group">Ver histórico completo <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" /></button>
           </div>
           <div className="space-y-8 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
             {[
@@ -260,10 +275,10 @@ const SocialAssistanceModule: React.FC = () => {
           <div><h1 className="text-3xl font-black text-slate-800 tracking-tight">Assistência Social</h1><p className="text-sm text-slate-400 font-medium">Gestão humana, acolhimento e impacto social</p></div>
         </div>
         <div className="flex bg-slate-100 p-1.5 rounded-2xl shadow-inner overflow-x-auto scrollbar-hide">
-          <button onClick={() => setActiveSubTab('visao-geral')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'visao-geral' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Visão Geral</button>
-          <button onClick={() => setActiveSubTab('historico')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'historico' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Histórico</button>
-          <button onClick={() => setActiveSubTab('solicitacoes')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'solicitacoes' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Solicitações</button>
-          <button onClick={() => setActiveSubTab('acompanhamento-externo')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'acompanhamento-externo' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento</button>
+          <button onClick={() => handleTabChange('visao-geral')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'visao-geral' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Visão Geral</button>
+          <button onClick={() => handleTabChange('historico')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'historico' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Histórico</button>
+          <button onClick={() => handleTabChange('solicitacoes')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'solicitacoes' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Solicitações</button>
+          <button onClick={() => handleTabChange('acompanhamento-externo')} className={`px-6 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeSubTab === 'acompanhamento-externo' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Acompanhamento</button>
         </div>
       </div>
 
@@ -388,7 +403,7 @@ const SocialAssistanceModule: React.FC = () => {
         onNewRequest={handleCreateRequest}
         onViewHistory={() => {
           setIsServiceHubOpen(false);
-          setActiveSubTab('historico');
+          handleTabChange('historico');
         }}
         onSchedule={() => {
           setIsServiceHubOpen(false);

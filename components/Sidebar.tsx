@@ -9,7 +9,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
-  const [expandedItems, setExpandedItems] = useState<string[]>(['estoque']);
+  // Alterado de ['estoque'] para [] para que inicie oculto
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleExpand = (id: string) => {

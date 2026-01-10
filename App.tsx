@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import LaunchTable from './components/LaunchTable';
 import LaunchForm from './components/LaunchForm';
@@ -14,23 +13,88 @@ import ExitForm from './components/ExitForm';
 import NotificationPopover from './components/NotificationPopover';
 import LoginPage from './components/LoginPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import Dashboard from './components/Dashboard';
 import Agenda from './components/Agenda';
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map } from 'lucide-react';
+import { supabase } from './services/supabase';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authView, setAuthView] = useState<'login' | 'forgot-password'>('login');
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password'>('login');
   const [activeTab, setActiveTab] = useState('inicio');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
-  if (!isLoggedIn) {
-    if (authView === 'forgot-password') {
-      return <ForgotPasswordPage onBackToLogin={() => setAuthView('login')} />;
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+      setIsCheckingAuth(false);
+    });
+
+    // Hash check for password reset (Supabase sends #access_token=...)
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery')) {
+      setAuthView('reset-password');
     }
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} onForgotPassword={() => setAuthView('forgot-password')} />;
+
+    // Query param check (if we manually redirected with ?reset=true)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reset') === 'true') {
+      // Just showing the page, but usually magic link handles the session
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+      if (session) {
+        setAuthView('login'); // Reset view state on login
+      }
+      setIsCheckingAuth(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-vh-screen h-screen w-full bg-white">
+        <div className="flex flex-col items-center gap-6">
+          <img
+            src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"
+            alt="SAO Logo"
+            className="h-16 w-auto animate-pulse"
+          />
+          <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden relative">
+            <div className="absolute top-0 left-0 h-full bg-[#1E40AF] rounded-full animate-loading-bar w-1/3"></div>
+          </div>
+          <p className="text-sm font-medium text-slate-400 animate-pulse">Carregando SAO...</p>
+        </div>
+        <style>{`
+          @keyframes loading-bar {
+            0% { left: -33%; }
+            100% { left: 100%; }
+          }
+          .animate-loading-bar {
+            animation: loading-bar 1.5s ease-in-out infinite;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="h-screen w-full animate-in fade-in duration-700">
+        {authView === 'reset-password' && <ResetPasswordPage onBackToLogin={() => setAuthView('login')} />}
+        {authView === 'forgot-password' && <ForgotPasswordPage onBackToLogin={() => setAuthView('login')} />}
+        {authView === 'login' && <LoginPage onLogin={() => setIsLoggedIn(true)} onForgotPassword={() => setAuthView('forgot-password')} />}
+      </div>
+    );
   }
 
   const renderContent = () => {
@@ -61,7 +125,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsFormOpen(true)}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 font-bold text-sm"
               >
@@ -96,7 +160,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsFormOpen(true)}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[#E11D48] hover:bg-rose-700 text-white rounded-xl shadow-lg shadow-rose-500/20 transition-all active:scale-95 font-bold text-sm"
               >
@@ -131,7 +195,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsFormOpen(true)}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 font-bold text-sm"
               >
@@ -166,7 +230,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsFormOpen(true)}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 font-bold text-sm"
               >
@@ -187,7 +251,7 @@ const App: React.FC = () => {
       if (isFormOpen) {
         return <LaunchForm onCancel={() => setIsFormOpen(false)} />;
       }
-      
+
       return (
         <>
           <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 p-6 md:px-8 md:py-6 flex items-center justify-between border-b border-slate-100">
@@ -196,7 +260,7 @@ const App: React.FC = () => {
               <p className="text-xs text-slate-400 mt-0.5">Gestão de entradas e estoque</p>
             </div>
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsFormOpen(true)}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 font-bold text-sm"
               >
@@ -219,7 +283,7 @@ const App: React.FC = () => {
         </div>
         <h2 className="text-xl font-bold text-slate-600">Em Desenvolvimento</h2>
         <p className="max-w-xs mt-2">A seção de "{activeTab}" está sendo preparada para o próximo lançamento.</p>
-        <button 
+        <button
           onClick={() => setActiveTab('inicio')}
           className="mt-6 text-[#1E40AF] font-bold hover:underline"
         >
@@ -229,9 +293,13 @@ const App: React.FC = () => {
     );
   };
 
-  const handleSidebarSelect = (id: string) => {
+  const handleSidebarSelect = async (id: string) => {
     if (id === 'notificacao') {
       setIsNotificationOpen(!isNotificationOpen);
+      return;
+    }
+    if (id === 'logout') {
+      await supabase.auth.signOut();
       return;
     }
     setActiveTab(id);
@@ -240,7 +308,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-white text-slate-900 overflow-hidden font-['Inter']">
+    <div className="flex h-screen bg-white text-slate-900 overflow-hidden font-['Inter'] animate-in fade-in duration-700">
       <Sidebar activeId={activeTab} onSelect={handleSidebarSelect} />
 
       {isNotificationOpen && (
@@ -256,8 +324,8 @@ const App: React.FC = () => {
             <span className="font-bold">Sistema de Gestão e Assistência</span>
           </div>
           <div className="flex gap-4 font-semibold">
-             <a href="#" className="hover:text-blue-600 transition-colors">Suporte</a>
-             <a href="#" className="hover:text-blue-600 transition-colors">Documentação</a>
+            <a href="#" className="hover:text-blue-600 transition-colors">Suporte</a>
+            <a href="#" className="hover:text-blue-600 transition-colors">Documentação</a>
           </div>
         </footer>
       </main>

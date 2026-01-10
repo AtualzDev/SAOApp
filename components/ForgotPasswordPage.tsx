@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 interface ForgotPasswordPageProps {
   onBackToLogin: () => void;
@@ -10,10 +11,27 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBackToLogin }
   const [emailSent, setEmailSent] = useState(false);
   const [email, setEmail] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
+    if (!email) return;
+
+    setLoading(true);
+    setError(null);
+
+    // Supabase reset password
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/?reset=true`,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
       setEmailSent(true);
+      setLoading(false);
     }
   };
 
@@ -23,10 +41,10 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBackToLogin }
       <div className="w-full lg:w-1/2 p-8 md:p-16 lg:p-24 flex flex-col justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
-           <img 
-            src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg" 
-            alt="SAO Logo" 
-            className="h-10 w-auto" 
+          <img
+            src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"
+            alt="SAO Logo"
+            className="h-10 w-auto"
           />
         </div>
 
@@ -35,7 +53,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBackToLogin }
           {!emailSent ? (
             <>
               <div className="space-y-2">
-                <button 
+                <button
                   onClick={onBackToLogin}
                   className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors mb-6"
                 >
@@ -46,6 +64,12 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBackToLogin }
                   Insira o e-mail associado à sua conta e enviaremos um link para redefinir sua senha.
                 </p>
               </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
+                  {error}
+                </div>
+              )}
 
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="space-y-1.5">
@@ -65,9 +89,10 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBackToLogin }
 
                 <button
                   type="submit"
-                  className="w-full h-12 bg-[#4338CA] hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  disabled={loading}
+                  className="w-full h-12 bg-[#4338CA] hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Enviar link de recuperação
+                  {loading ? 'Enviando...' : 'Enviar link de recuperação'}
                 </button>
               </form>
             </>
@@ -79,7 +104,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBackToLogin }
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-slate-900">E-mail enviado!</h2>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  Enviamos um link de recuperação para <span className="font-bold text-slate-700">{email}</span>. 
+                  Enviamos um link de recuperação para <span className="font-bold text-slate-700">{email}</span>.
                   Verifique sua caixa de entrada e spam.
                 </p>
               </div>
@@ -116,10 +141,10 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({ onBackToLogin }
           <div className="bg-[#4338CA] rounded-br-[100px]"></div>
           <div className="bg-[#C7D2FE] rounded-[40px]"></div>
           <div className="rounded-[40px] overflow-hidden">
-             <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
+            <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
           </div>
           <div className="rounded-[40px] overflow-hidden">
-             <img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
+            <img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
           </div>
           <div className="bg-[#EEF2FF] rounded-full"></div>
           <div className="bg-[#A5B4FC] rounded-tr-[100px]"></div>

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { supabase } from '../services/supabase';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 interface LoginPageProps {
@@ -9,6 +10,29 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      // Successful login
+      onLogin();
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-white font-['Inter']">
@@ -16,10 +40,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
       <div className="w-full lg:w-1/2 p-8 md:p-16 lg:p-24 flex flex-col justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
-           <img 
-            src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg" 
-            alt="SAO Logo" 
-            className="h-10 w-auto" 
+          <img
+            src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"
+            alt="SAO Logo"
+            className="h-10 w-auto"
           />
         </div>
 
@@ -32,12 +56,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); onLogin(); }}>
+          {error && (
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <form className="space-y-5" onSubmit={handleLogin}>
             {/* Email */}
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-slate-700">Email</label>
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Digite seu email"
                 className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all"
               />
@@ -49,6 +82,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Digite sua senha"
                   className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all"
                 />
@@ -74,7 +110,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
                 </div>
                 <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">Lembrar senha</span>
               </label>
-              <button 
+              <button
                 type="button"
                 onClick={onForgotPassword}
                 className="text-sm font-bold text-blue-600 hover:underline bg-transparent border-none"
@@ -86,9 +122,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full h-12 bg-[#4338CA] hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95"
+              disabled={loading}
+              className="w-full h-12 bg-[#4338CA] hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Acessar conta
+              {loading ? 'Entrando...' : 'Acessar conta'}
             </button>
           </form>
 
@@ -134,11 +171,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
           <div className="bg-[#4338CA] rounded-br-[100px]"></div>
           <div className="bg-[#C7D2FE] rounded-[40px]"></div>
           <div className="rounded-[40px] overflow-hidden">
-             <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
+            <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
           </div>
           {/* Row 4 */}
           <div className="rounded-[40px] overflow-hidden">
-             <img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
+            <img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
           </div>
           <div className="bg-[#EEF2FF] rounded-full"></div>
           <div className="bg-[#A5B4FC] rounded-tr-[100px]"></div>

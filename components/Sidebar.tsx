@@ -13,7 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleExpand = (id: string) => {
-    setExpandedItems(prev => 
+    setExpandedItems(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
@@ -36,11 +36,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
               onSelect(item.id);
             }
           }}
-          className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-full ${
-            isActive 
-              ? 'bg-white text-[#1E40AF] font-bold shadow-md' 
+          className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-full ${isActive
+              ? 'bg-white text-[#1E40AF] font-bold shadow-md'
               : 'hover:bg-white/10 text-white'
-          }`}
+            }`}
         >
           <span className={`${isActive ? 'text-[#1E40AF]' : 'text-white'}`}>{item.icon}</span>
           {!isCollapsed && <span className="flex-1 text-left text-sm whitespace-nowrap">{item.label}</span>}
@@ -63,11 +62,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
               <button
                 key={child.id}
                 onClick={() => onSelect(child.id)}
-                className={`w-full flex items-center gap-3 pl-11 pr-4 py-2 transition-all text-xs rounded-full ${
-                  activeId === child.id 
-                    ? 'bg-white/20 text-white font-bold' 
+                className={`w-full flex items-center gap-3 pl-11 pr-4 py-2 transition-all text-xs rounded-full ${activeId === child.id
+                    ? 'bg-white/20 text-white font-bold'
                     : 'text-white/70 hover:text-white hover:bg-white/10'
-                }`}
+                  }`}
               >
                 {child.label}
               </button>
@@ -79,21 +77,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
   };
 
   return (
-    <aside 
+    <aside
       className={`bg-[#1E40AF] text-white flex flex-col h-screen transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-72'} shadow-xl z-20 sticky top-0`}
     >
       {/* Header com Logo */}
       <div className="p-6 flex items-center justify-between">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <img 
-              src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg" 
-              alt="SAO Logo" 
-              className="h-10 w-auto brightness-0 invert" 
+            <img
+              src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"
+              alt="SAO Logo"
+              className="h-10 w-auto brightness-0 invert"
             />
           </div>
         )}
-        <button 
+        <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-1.5 rounded-full hover:bg-white/10 transition-colors border border-white/20"
         >
@@ -120,9 +118,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
       <div className="p-4 pt-0">
         <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
           <div className="relative">
-             <div className="w-12 h-12 rounded-full bg-slate-400 flex-shrink-0 border-2 border-white/20 overflow-hidden shadow-sm">
-                <img src="https://picsum.photos/seed/isaque/100/100" alt="User Profile" />
-             </div>
+            <div className="w-12 h-12 rounded-full bg-slate-400 flex-shrink-0 border-2 border-white/20 overflow-hidden shadow-sm">
+              <img src="https://picsum.photos/seed/isaque/100/100" alt="User Profile" />
+            </div>
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
@@ -131,7 +129,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
             </div>
           )}
           {!isCollapsed && (
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/80 hover:text-white">
+            <button
+              onClick={() => onSelect('logout')}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/80 hover:text-white"
+            >
               <LogOut size={20} />
             </button>
           )}

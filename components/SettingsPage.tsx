@@ -13,7 +13,12 @@ import {
   Package,
   Calendar,
   CreditCard,
-  Stethoscope
+  Stethoscope,
+  X,
+  Mail,
+  CheckCircle2,
+  ChevronRight,
+  Send
 } from 'lucide-react';
 
 type SettingsTab = 'conta' | 'agenda' | 'assinatura' | 'cestas' | 'cid' | 'fornecedores' | 'usuarios' | 'whatsapp' | 'logs';
@@ -28,6 +33,12 @@ interface UserData {
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('usuarios');
+  
+  // States para Modais
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [isSendLinkModalOpen, setIsSendLinkModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 
   const tabs = [
     { id: 'conta', label: 'Dados da conta' },
@@ -41,7 +52,7 @@ const SettingsPage: React.FC = () => {
     { id: 'logs', label: 'Logs' },
   ];
 
-  const users: UserData[] = [
+  const [users, setUsers] = useState<UserData[]>([
     { id: '1', nome: 'Adilson', email: 'adilson@capec.org.br', cargo: 'Manutenção' },
     { id: '2', nome: 'Camila Ornelas', email: 'camila@capec.org.br', cargo: 'RH' },
     { id: '3', nome: 'Daniel', email: 'capec@capec.com.br', cargo: 'ADM', avatar: 'https://i.pravatar.cc/150?u=daniel' },
@@ -53,11 +64,20 @@ const SettingsPage: React.FC = () => {
     { id: '9', nome: 'Renata | SAO', email: 'comercial@sao.app', cargo: 'Comercial' },
     { id: '10', nome: 'Renata | Suporte', email: 'renata@capec.org.br', cargo: 'Suporte' },
     { id: '11', nome: 'adriana@capec.org.br', email: 'adriana@capec.org.br', cargo: 'Assistente Social' },
-  ];
+  ]);
+
+  const handleEditClick = (user: UserData) => {
+    setSelectedUser(user);
+    setIsEditUserModalOpen(true);
+  };
+
+  const handleSendLinkClick = (user: UserData) => {
+    setSelectedUser(user);
+    setIsSendLinkModalOpen(true);
+  };
 
   const renderUsersTab = () => (
     <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
-      {/* Toolbar da Tabela */}
       <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-bold text-slate-700">Lista de Usuários</h2>
@@ -71,17 +91,19 @@ const SettingsPage: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
             <input 
               type="text" 
-              placeholder="Buscar produto" 
+              placeholder="Buscar usuário..." 
               className="w-full h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all"
             />
           </div>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-blue-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-95 whitespace-nowrap">
+          <button 
+            onClick={() => setIsAddUserModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-blue-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-95 whitespace-nowrap"
+          >
             <Plus size={18} /> Novo Usuário
           </button>
         </div>
       </div>
 
-      {/* Tabela */}
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
@@ -115,10 +137,18 @@ const SettingsPage: React.FC = () => {
                 </td>
                 <td className="px-8 py-4">
                   <div className="flex items-center justify-center gap-2">
-                    <button className="p-2 text-blue-400 hover:text-blue-600 transition-colors" title="Editar">
+                    <button 
+                      onClick={() => handleEditClick(user)}
+                      className="p-2 text-blue-400 hover:text-blue-600 transition-colors" 
+                      title="Editar"
+                    >
                       <Pencil size={18} />
                     </button>
-                    <button className="p-2 text-blue-400 hover:text-blue-600 transition-colors" title="Alterar Senha">
+                    <button 
+                      onClick={() => handleSendLinkClick(user)}
+                      className="p-2 text-blue-400 hover:text-blue-600 transition-colors" 
+                      title="Enviar Link de Acesso"
+                    >
                       <Key size={18} />
                     </button>
                     <button className="p-2 text-blue-400 hover:text-blue-600 transition-colors" title="Permissões">
@@ -135,7 +165,7 @@ const SettingsPage: React.FC = () => {
   );
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full relative">
       <div className="flex items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">Configurações</h1>
@@ -143,7 +173,6 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Navegação por Abas Horizontal */}
       <div className="bg-slate-100/50 p-1.5 rounded-[20px] flex items-center gap-1 overflow-x-auto scrollbar-hide border border-slate-100">
         {tabs.map((tab) => (
           <button
@@ -160,7 +189,6 @@ const SettingsPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Conteúdo das Abas */}
       <div className="mt-8">
         {activeTab === 'usuarios' && renderUsersTab()}
         
@@ -181,6 +209,159 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modais de Usuários */}
+      
+      {/* Modal: Novo Usuário */}
+      {isAddUserModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsAddUserModalOpen(false)} />
+          <div className="relative bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                  <User size={24} />
+                </div>
+                <h2 className="text-xl font-black text-slate-800 tracking-tight">Novo Usuário</h2>
+              </div>
+              <button onClick={() => setIsAddUserModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 transition-all">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</label>
+                  <input type="text" placeholder="Nome do colaborador" className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Email Corporativo</label>
+                  <input type="email" placeholder="colaborador@capec.org.br" className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Cargo / Função</label>
+                  <select className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold outline-none focus:bg-white transition-all cursor-pointer">
+                    <option>Assistente Social</option>
+                    <option>Gestão</option>
+                    <option>Financeiro</option>
+                    <option>Operacional</option>
+                    <option>TI</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-4">
+                <button onClick={() => setIsAddUserModalOpen(false)} className="px-6 py-3 text-slate-400 font-bold hover:text-slate-600 transition-all">Cancelar</button>
+                <button className="px-10 py-3 bg-[#1E40AF] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 transition-all active:scale-95">
+                  Cadastrar Usuário
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Editar Usuário */}
+      {isEditUserModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsEditUserModalOpen(false)} />
+          <div className="relative bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                  <Pencil size={24} />
+                </div>
+                <h2 className="text-xl font-black text-slate-800 tracking-tight">Editar Usuário</h2>
+              </div>
+              <button onClick={() => setIsEditUserModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 transition-all">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</label>
+                  <input 
+                    type="text" 
+                    defaultValue={selectedUser.nome} 
+                    className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all" 
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Email Corporativo</label>
+                  <input 
+                    type="email" 
+                    readOnly
+                    defaultValue={selectedUser.email} 
+                    className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-slate-400 cursor-not-allowed outline-none" 
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Cargo / Função</label>
+                  <select 
+                    defaultValue={selectedUser.cargo}
+                    className="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold outline-none focus:bg-white transition-all cursor-pointer"
+                  >
+                    <option>Manutenção</option>
+                    <option>RH</option>
+                    <option>ADM</option>
+                    <option>Assistente Social</option>
+                    <option>Gestão</option>
+                    <option>TI</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-4">
+                <button onClick={() => setIsEditUserModalOpen(false)} className="px-6 py-3 text-slate-400 font-bold hover:text-slate-600 transition-all">Cancelar</button>
+                <button className="px-10 py-3 bg-[#1E40AF] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 transition-all active:scale-95">
+                  Salvar Alterações
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Enviar Link de Acesso */}
+      {isSendLinkModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsSendLinkModalOpen(false)} />
+          <div className="relative bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="p-8 text-center space-y-6">
+              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto shadow-inner border border-blue-100">
+                <Send size={32} />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Enviar Link de Acesso</h2>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                  Deseja enviar um link de login único para o email institucional de <span className="font-bold text-slate-800">{selectedUser.nome}</span>?
+                </p>
+                <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
+                   <Mail size={14} /> {selectedUser.email}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 pt-4">
+                <button 
+                  onClick={() => setIsSendLinkModalOpen(false)} 
+                  className="h-12 border border-slate-200 text-slate-500 rounded-2xl font-bold hover:bg-slate-50 transition-all"
+                >
+                  Agora não
+                </button>
+                <button 
+                  onClick={() => setIsSendLinkModalOpen(false)}
+                  className="h-12 bg-[#1E40AF] text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-800 transition-all flex items-center justify-center gap-2"
+                >
+                  Enviar Agora <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
+               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">O link expira em 24 horas por segurança.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

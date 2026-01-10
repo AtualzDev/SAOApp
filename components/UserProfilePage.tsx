@@ -13,7 +13,10 @@ import {
   FileSignature,
   Camera,
   X,
-  ChevronRight
+  ChevronRight,
+  Phone,
+  MapPin,
+  Map
 } from 'lucide-react';
 
 type ProfileTab = 'acesso' | 'gerais' | 'profissionais';
@@ -180,6 +183,99 @@ const UserProfilePage: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'gerais' && (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <section className="space-y-8">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-cyan-50 text-[#00A3C4] rounded-2xl">
+                  <User size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 tracking-tight">Informações Pessoais</h3>
+                  <p className="text-xs text-slate-400 font-medium">Dados de contato e localização do usuário.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-600">Nome Completo*</label>
+                  <input 
+                    type="text" 
+                    defaultValue="Samuel Alves da Silva" 
+                    placeholder="Seu nome completo" 
+                    className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] focus:ring-4 focus:ring-cyan-500/5 transition-all" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-600">Telefone*</label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                    <input 
+                      type="text" 
+                      defaultValue="(31) 9 9876-5432" 
+                      placeholder="(00) 0 0000-0000" 
+                      className="w-full h-12 pl-12 pr-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] focus:ring-4 focus:ring-cyan-500/5 transition-all" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-600">Email Secundário/Pessoal</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                    <input 
+                      type="email" 
+                      defaultValue="samuel.pessoal@gmail.com" 
+                      placeholder="seuemail@exemplo.com" 
+                      className="w-full h-12 pl-12 pr-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] focus:ring-4 focus:ring-cyan-500/5 transition-all" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção de Endereço */}
+              <div className="space-y-6 pt-6 border-t border-slate-50">
+                <div className="flex items-center gap-2">
+                  <MapPin size={18} className="text-[#00A3C4]" />
+                  <span className="text-sm font-bold text-slate-700 uppercase tracking-widest text-[11px]">Endereço Residencial</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                  <div className="md:col-span-3 space-y-2">
+                    <label className="text-sm font-bold text-slate-600">CEP</label>
+                    <input type="text" defaultValue="31255-000" className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] transition-all" />
+                  </div>
+                  <div className="md:col-span-9 space-y-2">
+                    <label className="text-sm font-bold text-slate-600">Logradouro (Rua/Avenida)*</label>
+                    <input type="text" defaultValue="Rua das Flores" className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] transition-all" />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-sm font-bold text-slate-600">Número*</label>
+                    <input type="text" defaultValue="123" className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] transition-all" />
+                  </div>
+                  <div className="md:col-span-4 space-y-2">
+                    <label className="text-sm font-bold text-slate-600">Bairro*</label>
+                    <input type="text" defaultValue="Centro" className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] transition-all" />
+                  </div>
+                  <div className="md:col-span-4 space-y-2">
+                    <label className="text-sm font-bold text-slate-600">Cidade*</label>
+                    <input type="text" defaultValue="Belo Horizonte" className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] transition-all" />
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-sm font-bold text-slate-600">UF*</label>
+                    <input type="text" defaultValue="MG" className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-[#00A3C4] transition-all text-center" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-8">
+                <button className="flex items-center gap-2 px-12 py-4 bg-[#00A3C4] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-cyan-500/20 transition-all active:scale-95 hover:bg-[#008ba8]">
+                  Salvar Dados Gerais <CheckCircle2 size={18} />
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
         {activeTab === 'profissionais' && (
           <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-300">
             <section className="space-y-8">
@@ -233,15 +329,6 @@ const UserProfilePage: React.FC = () => {
               </div>
             </section>
           </div>
-        )}
-
-        {activeTab === 'gerais' && (
-           <div className="space-y-8 animate-in fade-in duration-300">
-             <div className="bg-slate-50 p-12 rounded-[40px] border border-slate-100 flex flex-col items-center justify-center text-center">
-                <User size={48} className="text-slate-200 mb-4" />
-                <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Seção em atualização</p>
-             </div>
-           </div>
         )}
       </div>
 

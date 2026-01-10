@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { SIDEBAR_ITEMS } from '../constants';
-import { ChevronRight, ChevronDown, LogOut, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronDown, LogOut, ChevronLeft, Settings } from 'lucide-react';
 
 interface SidebarProps {
   activeId: string;
@@ -9,7 +9,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
-  const [expandedItems, setExpandedItems] = useState<string[]>(['estoque']);
+  // Alterado de ['estoque'] para [] para que inicie oculto
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleExpand = (id: string) => {
@@ -116,7 +117,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
 
       {/* Perfil do Usuário */}
       <div className="p-4 pt-0">
-        <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+        <div 
+          onClick={() => onSelect('perfil')}
+          className={`flex items-center gap-3 cursor-pointer group hover:bg-white/10 p-2 rounded-[20px] transition-all ${isCollapsed ? 'justify-center' : ''} ${activeId === 'perfil' ? 'bg-white/20' : ''}`}
+        >
           <div className="relative">
             <div className="w-12 h-12 rounded-full bg-slate-400 flex-shrink-0 border-2 border-white/20 overflow-hidden shadow-sm">
               <img src="https://picsum.photos/seed/isaque/100/100" alt="User Profile" />
@@ -124,8 +128,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate leading-tight">Isaque Putumuju</p>
-              <p className="text-xs text-white/50 truncate font-medium">Cargo</p>
+              <p className="text-sm font-bold truncate leading-tight group-hover:text-blue-200 transition-colors">Isaque Putumuju</p>
+              <p className="text-xs text-white/50 truncate font-medium">Gestor ONG</p>
             </div>
           )}
           {!isCollapsed && (

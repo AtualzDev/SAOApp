@@ -17,7 +17,9 @@ import {
   PackageMinus,
   Layers,
   Map,
-  ClipboardList
+  ClipboardList,
+  History,
+  Activity
 } from 'lucide-react';
 import { Launch, SidebarItem } from './types';
 
@@ -50,6 +52,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: <Package size={20} />, 
     path: '/estoque',
     children: [
+      { id: 'estoque-visao-geral', label: 'Visão Geral', icon: <LayoutDashboard size={18} />, path: '/estoque/visao-geral' },
       { id: 'entradas', label: 'Entradas', icon: <PackagePlus size={18} />, path: '/estoque/entradas' },
       { id: 'produtos', label: 'Produtos/Itens', icon: <Layers size={18} />, path: '/estoque/produtos' },
       { id: 'saidas', label: 'Saídas', icon: <PackageMinus size={18} />, path: '/estoque/saidas' },
@@ -58,7 +61,18 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
       { id: 'auditoria', label: 'Auditoria', icon: <ShieldCheck size={18} />, path: '/estoque/auditoria' },
     ]
   },
-  { id: 'assistencia', label: 'Assistência Social', icon: <HeartHandshake size={20} />, path: '/assistencia' },
+  { 
+    id: 'assistencia', 
+    label: 'Assistência Social', 
+    icon: <HeartHandshake size={20} />, 
+    path: '/assistencia',
+    children: [
+      { id: 'soc-visao-geral', label: 'Visão Geral', icon: <LayoutDashboard size={18} />, path: '/assistencia/visao-geral' },
+      { id: 'soc-historico', label: 'Histórico', icon: <History size={18} />, path: '/assistencia/historico' },
+      { id: 'soc-solicitacoes', label: 'Solicitações', icon: <ClipboardList size={18} />, path: '/assistencia/solicitacoes' },
+      { id: 'soc-acompanhamento', label: 'Acompanhamento', icon: <Activity size={18} />, path: '/assistencia/acompanhamento' },
+    ]
+  },
   { id: 'gestor', label: 'Gestor', icon: <ShieldCheck size={20} />, path: '/gestor' },
   { id: 'notificacao', label: 'Notificação', icon: <Bell size={20} />, path: '/notificacao', badge: 0 },
   { id: 'configuracoes', label: 'Configurações', icon: <Settings size={20} />, path: '/configuracoes' },

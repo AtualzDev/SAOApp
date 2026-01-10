@@ -6,9 +6,11 @@ import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 interface LoginPageProps {
   onLogin: () => void;
   onForgotPassword: () => void;
+  onShowPrivacy: () => void;
+  onShowTerms: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword, onShowPrivacy, onShowTerms }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -142,10 +144,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword }) => {
             © Plataforma SAO 2026
           </div>
           <div className="flex items-center gap-6">
-            <button className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors">
+            <button 
+              onClick={onShowPrivacy}
+              className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors"
+            >
               Políticas de Privacidade
             </button>
-            <button className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors">
+            <button 
+              onClick={onShowTerms}
+              className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors"
+            >
               Termos de Uso
             </button>
           </div>

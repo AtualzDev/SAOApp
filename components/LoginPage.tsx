@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
+import { translateError } from '../services/errorTranslator';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 interface LoginPageProps {
@@ -27,8 +28,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword, onShow
       password,
     });
 
+
     if (error) {
-      setError(error.message);
+      setError(translateError(error.message));
       setLoading(false);
     } else {
       // Successful login
@@ -54,7 +56,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword, onShow
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-slate-900">Fazer login</h1>
             <p className="text-slate-500 text-sm">
-              Seja bem vindo a SAO a plataforma criada para sua ONG.
+              Seja bem-vindo a SAO, a plataforma criada para sua ONG.
             </p>
           </div>
 
@@ -110,14 +112,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword, onShow
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">Lembrar senha</span>
+                <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">Lembrar-me</span>
               </label>
               <button
                 type="button"
                 onClick={onForgotPassword}
                 className="text-sm font-bold text-blue-600 hover:underline bg-transparent border-none"
               >
-                Esqueceu senha
+                Esqueceu sua senha?
               </button>
             </div>
 
@@ -144,13 +146,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onForgotPassword, onShow
             © Plataforma SAO 2026
           </div>
           <div className="flex items-center gap-6">
-            <button 
+            <button
               onClick={onShowPrivacy}
               className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors"
             >
-              Políticas de Privacidade
+              Política de Privacidade
             </button>
-            <button 
+            <button
               onClick={onShowTerms}
               className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors"
             >

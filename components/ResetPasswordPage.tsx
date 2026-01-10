@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
+import { translateError } from '../services/errorTranslator';
 import { ArrowLeft, Lock, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 interface ResetPasswordPageProps {
@@ -17,6 +18,10 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onBackToLogin }) 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (password.length < 6) {
+            setError('A senha deve ter no mínimo 6 caracteres.');
+            return;
+        }
         if (password !== confirmPassword) {
             setError('As senhas não coincidem.');
             return;
@@ -27,141 +32,121 @@ const ResetPasswordPage: React.FC<ResetPasswordPageProps> = ({ onBackToLogin }) 
         const { error } = await supabase.auth.updateUser({ password: password });
 
         if (error) {
-            setError(error.message);
+            setError(translateError(error.message));
         } else {
             setSuccess(true);
             setTimeout(() => {
-                // Could auto-redirect here, but showing success message is better UX first
-            }, 2000);
+                onBackToLogin(); // Redireciona para login/home após sucesso
+            }, 3000);
         }
         setLoading(false);
     };
 
     return (
-        <div className="flex min-h-screen bg-white font-['Inter']">
-            {/* Lado Esquerdo - Formulário */}
-            <div className="w-full lg:w-1/2 p-8 md:p-16 lg:p-24 flex flex-col justify-between">
-                {/* Logo */}
-                <div className="flex items-center gap-2">
+        <div className="relative flex min-h-screen font-['Inter'] items-center justify-center">
+            {/* Background Image with Overlay */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/cdn-cgi/image/w=2048,h=,f=auto,dpr=0.75,fit=contain/f1669464208318x153835531547657380/fundo%20de%20tela%20modificado.png"
+                    className="w-full h-full object-cover"
+                    alt="Background"
+                />
+                <div className="absolute inset-0 bg-[#2e0a4d]/60 backdrop-blur-sm"></div>
+            </div>
+
+            {/* Content Card */}
+            <div className="relative z-10 w-full max-w-md px-4">
+                <div className="text-center mb-8">
                     <img
                         src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"
                         alt="SAO Logo"
-                        className="h-10 w-auto"
+                        className="h-8 w-auto mx-auto brightness-0 invert"
                     />
                 </div>
 
-                {/* Form Container */}
-                <div className="max-w-md w-full mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {!success ? (
-                        <>
-                            <div className="space-y-2">
-                                <h1 className="text-3xl font-bold text-slate-900">Redefinir senha</h1>
-                                <p className="text-slate-500 text-sm">
-                                    Crie uma nova senha segura para sua conta.
-                                </p>
-                            </div>
-
-                            {error && (
-                                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
-                                    {error}
+                <div className="bg-white rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+                    <div className="p-8 md:p-10">
+                        {!success ? (
+                            <>
+                                <div className="space-y-2 mb-8 text-center sm:text-left">
+                                    <h1 className="text-2xl font-bold text-slate-800">Redefinir senha</h1>
+                                    <p className="text-slate-500 text-xs font-medium">
+                                        Esse link poderá ser utilizado uma única vez dentro de um prazo de 24 horas
+                                    </p>
                                 </div>
-                            )}
 
-                            <form className="space-y-6" onSubmit={handleSubmit}>
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-slate-700">Nova Senha</label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            required
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="Mínimo de 6 caracteres"
-                                            className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                        >
-                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                        </button>
+                                {error && (
+                                    <div className="mb-6 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                        {error}
                                     </div>
-                                </div>
+                                )}
 
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-slate-700">Confirmar Nova Senha</label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            required
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            placeholder="Repita a nova senha"
-                                            className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all"
-                                        />
+                                <form className="space-y-5" onSubmit={handleSubmit}>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-700">Senha</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="Digite a senha"
+                                                className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#1E40AF] transition-all"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                            >
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
 
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-700">Confirmar senha</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                placeholder="Confirme sua senha"
+                                                className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#1E40AF] transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full h-11 mt-2 bg-[#0025CC] hover:bg-blue-800 text-white rounded-lg font-bold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? 'Redefinindo...' : 'Redefinir senha'}
+                                    </button>
+                                </form>
+                            </>
+                        ) : (
+                            <div className="text-center space-y-6 py-4">
+                                <div className="w-16 h-16 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-sm border border-green-100">
+                                    <CheckCircle2 size={32} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h2 className="text-xl font-bold text-slate-800">Tudo certo!</h2>
+                                    <p className="text-slate-500 text-sm leading-relaxed">
+                                        Sua senha foi redefinida com sucesso.
+                                    </p>
+                                </div>
                                 <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full h-12 bg-[#4338CA] hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    onClick={onBackToLogin}
+                                    className="w-full h-11 bg-[#0025CC] hover:bg-blue-800 text-white rounded-lg font-bold text-sm shadow-xl shadow-blue-500/20 transition-all active:scale-95"
                                 >
-                                    {loading ? 'Redefinindo...' : 'Atualizar senha'}
+                                    Voltar para o login
                                 </button>
-                            </form>
-                        </>
-                    ) : (
-                        <div className="text-center space-y-6 py-8">
-                            <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                                <CheckCircle2 size={40} />
                             </div>
-                            <div className="space-y-2">
-                                <h2 className="text-2xl font-bold text-slate-900">Senha atualizada!</h2>
-                                <p className="text-slate-500 text-sm leading-relaxed">
-                                    Sua senha foi redefinida com sucesso. Agora você pode entrar com sua nova credencial.
-                                </p>
-                            </div>
-                            <button
-                                onClick={onBackToLogin}
-                                className="w-full h-12 bg-[#4338CA] hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95"
-                            >
-                                Voltar para o login
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className="text-slate-400 text-xs font-medium">
-                    © Plataforma SAO 2026
-                </div>
-            </div>
-
-            {/* Lado Direito - Grade Decorativa */}
-            <div className="hidden lg:flex lg:w-1/2 bg-white items-center justify-center overflow-hidden p-12">
-                <div className="grid grid-cols-3 gap-6 w-full max-w-2xl h-[80vh]">
-                    <div className="rounded-[40px] overflow-hidden bg-slate-100">
-                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover grayscale" alt="Person" />
+                        )}
                     </div>
-                    <div className="bg-[#A5B4FC] rounded-tl-[100px] rounded-br-[100px]"></div>
-                    <div className="rounded-[40px] overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
-                    </div>
-                    <div className="bg-[#EEF2FF] rounded-full"></div>
-                    <div className="bg-[#4338CA] rounded-tr-[100px] rounded-bl-[100px]"></div>
-                    <div className="bg-[#EEF2FF] rounded-[40px]"></div>
-                    <div className="bg-[#4338CA] rounded-br-[100px]"></div>
-                    <div className="bg-[#C7D2FE] rounded-[40px]"></div>
-                    <div className="rounded-[40px] overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
-                    </div>
-                    <div className="rounded-[40px] overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Person" />
-                    </div>
-                    <div className="bg-[#EEF2FF] rounded-full"></div>
-                    <div className="bg-[#A5B4FC] rounded-tr-[100px]"></div>
                 </div>
             </div>
         </div>

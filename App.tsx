@@ -51,15 +51,21 @@ const App: React.FC = () => {
     // Query param check (if we manually redirected with ?reset=true)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('reset') === 'true') {
-      // Just showing the page, but usually magic link handles the session
+      setAuthView('reset-password');
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
-      if (session) {
-        setAuthView('login'); // Reset view state on login
+
+      const isRecovery = window.location.hash.includes('type=recovery') ||
+        window.location.search.includes('reset=true');
+
+      if (session && !isRecovery && _event !== 'PASSWORD_RECOVERY') {
+        setAuthView('login');
+      } else if (isRecovery || _event === 'PASSWORD_RECOVERY') {
+        setAuthView('reset-password');
       }
       setIsCheckingAuth(false);
     });
@@ -90,6 +96,21 @@ const App: React.FC = () => {
             animation: loading-bar 1.5s ease-in-out infinite;
           }
         `}</style>
+      </div>
+    );
+  }
+
+  // Force render Reset Password Page if view is set, REGARDLESS of login status
+  // This is crucial because password recovery links log the user in automatically
+  if (authView === 'reset-password') {
+    return (
+      <div className="h-screen w-full animate-in fade-in duration-700">
+        <ResetPasswordPage onBackToLogin={() => {
+          // Clear URL params to prevent loop
+          window.history.replaceState({}, document.title, "/");
+          setAuthView('login');
+          // If logged in, this will drop through to dashboard below
+        }} />
       </div>
     );
   }
@@ -129,7 +150,7 @@ const App: React.FC = () => {
       if (activeTab === 'soc-historico') subTab = 'historico';
       if (activeTab === 'soc-solicitacoes') subTab = 'solicitacoes';
       if (activeTab === 'soc-acompanhamento') subTab = 'acompanhamento-externo';
-      
+
       return <SocialAssistanceModule initialTab={subTab} onTabChange={(newTab) => {
         let newId = 'soc-visao-geral';
         if (newTab === 'historico') newId = 'soc-historico';

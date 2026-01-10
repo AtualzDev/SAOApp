@@ -1,7 +1,7 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SIDEBAR_ITEMS } from '../constants';
-import { ChevronRight, ChevronDown, LogOut, ChevronLeft, Settings } from 'lucide-react';
+import { ChevronRight, ChevronDown, LogOut, ChevronLeft, Settings, User } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 interface SidebarProps {
   activeId: string;
@@ -12,6 +12,64 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
   // Alterado de ['estoque'] para [] para que inicie oculto
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    full_name: string;
+    role: string;
+    avatar_url?: string;
+  }>({
+    full_name: 'Carregando...',
+    role: '...',
+  });
+
+  useEffect(() => {
+    const getProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        let newProfile = {
+          full_name: 'Usuário',
+          role: 'Membro',
+          avatar_url: undefined as string | undefined
+        };
+
+        // 1. Get from Metadata (Auth)
+        const meta = session.user.user_metadata;
+        if (meta) {
+          if (meta.full_name) newProfile.full_name = meta.full_name;
+          if (meta.role || meta.cargo) newProfile.role = meta.role || meta.cargo;
+          if (meta.avatar_url) newProfile.avatar_url = meta.avatar_url;
+        }
+
+        // 2. Get from DB (Profiles) - Overwrites if present and not null
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, role, avatar_url, cargo')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile) {
+          if (profile.full_name) newProfile.full_name = profile.full_name;
+          if (profile.role || profile.cargo) newProfile.role = profile.role || profile.cargo;
+          if (profile.avatar_url) newProfile.avatar_url = profile.avatar_url;
+        }
+
+        setUserProfile(newProfile);
+      }
+    };
+
+    getProfile();
+
+    // Listen for changes (e.g. profile update)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'USER_UPDATED' || event === 'SIGNED_IN') {
+        getProfile();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const toggleExpand = (id: string) => {
     setExpandedItems(prev =>
@@ -38,8 +96,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
             }
           }}
           className={`w-full flex items-center gap-3 px-4 py-3 transition-all rounded-full ${isActive
-              ? 'bg-white text-[#1E40AF] font-bold shadow-md'
-              : 'hover:bg-white/10 text-white'
+            ? 'bg-white text-[#1E40AF] font-bold shadow-md'
+            : 'hover:bg-white/10 text-white'
             }`}
         >
           <span className={`${isActive ? 'text-[#1E40AF]' : 'text-white'}`}>{item.icon}</span>
@@ -64,8 +122,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
                 key={child.id}
                 onClick={() => onSelect(child.id)}
                 className={`w-full flex items-center gap-3 pl-11 pr-4 py-2 transition-all text-xs rounded-full ${activeId === child.id
-                    ? 'bg-white/20 text-white font-bold'
-                    : 'text-white/70 hover:text-white hover:bg-white/10'
+                  ? 'bg-white/20 text-white font-bold'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`}
               >
                 {child.label}
@@ -117,24 +175,31 @@ const Sidebar: React.FC<SidebarProps> = ({ activeId, onSelect }) => {
 
       {/* Perfil do Usuário */}
       <div className="p-4 pt-0">
-        <div 
+        <div
           onClick={() => onSelect('perfil')}
           className={`flex items-center gap-3 cursor-pointer group hover:bg-white/10 p-2 rounded-[20px] transition-all ${isCollapsed ? 'justify-center' : ''} ${activeId === 'perfil' ? 'bg-white/20' : ''}`}
         >
           <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-slate-400 flex-shrink-0 border-2 border-white/20 overflow-hidden shadow-sm">
-              <img src="https://picsum.photos/seed/isaque/100/100" alt="User Profile" />
+            <div className="w-12 h-12 rounded-full bg-slate-400 flex-shrink-0 border-2 border-white/20 overflow-hidden shadow-sm flex items-center justify-center">
+              {userProfile.avatar_url ? (
+                <img src={userProfile.avatar_url} alt="User Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={24} className="text-white/50" />
+              )}
             </div>
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate leading-tight group-hover:text-blue-200 transition-colors">Isaque Putumuju</p>
-              <p className="text-xs text-white/50 truncate font-medium">Gestor ONG</p>
+              <p className="text-sm font-bold truncate leading-tight group-hover:text-blue-200 transition-colors">{userProfile.full_name}</p>
+              <p className="text-xs text-white/50 truncate font-medium">{userProfile.role}</p>
             </div>
           )}
           {!isCollapsed && (
             <button
-              onClick={() => onSelect('logout')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect('logout');
+              }}
               className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/80 hover:text-white"
             >
               <LogOut size={20} />

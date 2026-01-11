@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import LaunchTable from './components/LaunchTable';
 import LaunchForm from './components/LaunchForm';
@@ -26,6 +26,9 @@ import Dashboard from './components/Dashboard';
 import Agenda from './components/Agenda';
 import UserProfilePage from './components/UserProfilePage';
 import SettingsPage from './components/SettingsPage';
+import RoutePage from './components/RoutePage';
+import ReportsPage from './components/ReportsPage';
+import ManagementDashboard from './components/ManagementDashboard';
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map, Users } from 'lucide-react';
 
@@ -35,6 +38,16 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('inicio');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isManagementMode, setIsManagementMode] = useState(false);
+
+  // Monitora se entra no modo gestão
+  useEffect(() => {
+    if (activeTab === 'gestor' || activeTab.startsWith('gestor-')) {
+      setIsManagementMode(true);
+    } else {
+      setIsManagementMode(false);
+    }
+  }, [activeTab]);
 
   if (!isLoggedIn) {
     if (authView === 'forgot-password') {
@@ -64,15 +77,23 @@ const App: React.FC = () => {
       return <UserProfilePage />;
     }
 
-    if (activeTab === 'inicio') {
-      return <Dashboard />;
+    if (activeTab === 'inicio' || activeTab === 'gestor-painel' || activeTab === 'gestor') {
+      return isManagementMode ? <ManagementDashboard /> : <Dashboard />;
     }
 
     if (activeTab === 'agenda') {
       return <Agenda />;
     }
 
-    // Lógica para o Estoque (Se for o item pai ou dashboard específico)
+    if (activeTab === 'rotas') {
+      return <RoutePage />;
+    }
+
+    if (activeTab === 'relatorios') {
+      return <ReportsPage />;
+    }
+
+    // Lógica para o Estoque
     if (activeTab === 'estoque' || activeTab === 'estoque-visao-geral') {
       return <StockDashboard onNavigate={(id) => setActiveTab(id)} />;
     }
@@ -236,11 +257,11 @@ const App: React.FC = () => {
     }
 
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
+      <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center animate-in fade-in duration-300">
         <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4"><Plus size={32} /></div>
-        <h2 className="text-xl font-bold text-slate-600">Em Desenvolvimento</h2>
-        <p className="max-w-xs mt-2">A seção de "{activeTab}" está sendo preparada para o próximo lançamento.</p>
-        <button onClick={() => setActiveTab('inicio')} className="mt-6 text-[#1E40AF] font-bold hover:underline">Voltar ao Início</button>
+        <h2 className="text-xl font-bold text-slate-600">Módulo em Desenvolvimento</h2>
+        <p className="max-w-xs mt-2">A seção de "{activeTab}" está sendo preparada para o próximo lançamento da plataforma.</p>
+        <button onClick={() => { setActiveTab('inicio'); setIsManagementMode(false); }} className="mt-6 text-[#1E40AF] font-bold hover:underline">Voltar ao Início</button>
       </div>
     );
   };
@@ -250,6 +271,16 @@ const App: React.FC = () => {
       setIsNotificationOpen(!isNotificationOpen);
       return;
     }
+
+    // Lógica para desmarcar o modo Gestor
+    if (id === 'gestor' && isManagementMode) {
+      setActiveTab('inicio');
+      setIsManagementMode(false);
+      setIsFormOpen(false);
+      setIsNotificationOpen(false);
+      return;
+    }
+
     setActiveTab(id);
     setIsFormOpen(false);
     setIsNotificationOpen(false);
@@ -257,7 +288,11 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-white text-slate-900 overflow-hidden font-['Inter']">
-      <Sidebar activeId={activeTab} onSelect={handleSidebarSelect} />
+      <Sidebar 
+        activeId={activeTab} 
+        onSelect={handleSidebarSelect} 
+        isManagementMode={isManagementMode}
+      />
       {isNotificationOpen && <NotificationPopover onClose={() => setIsNotificationOpen(false)} />}
       <main className="flex-1 flex flex-col overflow-y-auto bg-[#F8FAFC]">
         {renderContent()}

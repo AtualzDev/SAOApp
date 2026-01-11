@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../services/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { translateError } from '../services/errorTranslator';
@@ -19,12 +19,10 @@ import {
   Stethoscope,
   X,
   Mail,
-  CheckCircle2,
   ChevronRight,
   Send,
   Sparkles,
   Image as ImageIcon,
-  HelpCircle,
   Upload,
   FileSignature
 } from 'lucide-react';
@@ -43,6 +41,22 @@ interface UserData {
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('conta');
   const [activeAccountSubTab, setActiveAccountSubTab] = useState<AccountSubTab>('logo');
+
+  // Organization State
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [orgName, setOrgName] = useState('');
+  const [orgCnpj, setOrgCnpj] = useState('');
+  const [orgPhone, setOrgPhone] = useState('');
+  const [orgAddress, setOrgAddress] = useState('');
+  const [orgCity, setOrgCity] = useState('');
+  const [orgState, setOrgState] = useState('');
+  const [orgLogo, setOrgLogo] = useState('');
+  const [orgColor, setOrgColor] = useState('#1E40AF');
+  const [orgHeader, setOrgHeader] = useState('');
+  const [orgSignature, setOrgSignature] = useState('');
+
+  const [loadingOrg, setLoadingOrg] = useState(false);
+  const [savingOrg, setSavingOrg] = useState(false);
 
   // States para Modais
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
@@ -71,36 +85,155 @@ const SettingsPage: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUsers();
+    fetchOrganization();
   }, []);
+
+  // --- Formatters ---
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    const limited = digits.substring(0, 11);
+    if (limited.length <= 10) {
+      return limited.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else {
+      return limited.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    }
+  };
+
+  const formatCNPJ = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+      .substring(0, 18);
+  };
+
+  // --- Actions ---
+
+  const fetchOrganization = async () => {
+    try {
+      setLoadingOrg(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // 1. Get org_id from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile?.organization_id) {
+        setOrgId(profile.organization_id);
+
+        // 2. Fetch organization data
+        const { data: org, error } = await supabase
+          .from('empresa_ongs')
+          .select('*')
+          .eq('id', profile.organization_id)
+          .single();
+
+        if (org) {
+          setOrgName(org.name || '');
+          setOrgCnpj(org.cnpj || '');
+          setOrgPhone(org.contact_phone || '');
+          setOrgAddress(org.address || '');
+          setOrgCity(org.city || '');
+          setOrgState(org.state || '');
+          setOrgLogo(org.logo_url || '');
+          setOrgColor(org.primary_color || '#1E40AF');
+          setOrgHeader(org.header_url || '');
+          setOrgSignature(org.signature_url || '');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+    } finally {
+      setLoadingOrg(false);
+    }
+  };
+
+  const saveOrganization = async () => {
+    if (!orgId) return;
+    try {
+      setSavingOrg(true);
+      const { error } = await supabase
+        .from('empresa_ongs')
+        .update({
+          name: orgName,
+          cnpj: orgCnpj,
+          contact_phone: orgPhone,
+          address: orgAddress,
+          city: orgCity,
+          state: orgState,
+          logo_url: orgLogo,
+          primary_color: orgColor,
+          header_url: orgHeader,
+          signature_url: orgSignature
+        })
+        .eq('id', orgId);
+
+      if (error) throw error;
+      alert('Dados da organização salvos com sucesso!');
+    } catch (error: any) {
+      alert('Erro ao salvar organização: ' + error.message);
+    } finally {
+      setSavingOrg(false);
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'logo' | 'header' | 'signature') => {
+    if (!e.target.files || e.target.files.length === 0 || !orgId) return;
+
+    try {
+      setSavingOrg(true);
+      const file = e.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${orgId}/${field}_${Date.now()}.${fileExt}`;
+
+      // Upload to 'company-assets' bucket
+      const { error: uploadError } = await supabase.storage
+        .from('company-assets')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('company-assets')
+        .getPublicUrl(fileName);
+
+      if (field === 'logo') setOrgLogo(publicUrl);
+      if (field === 'header') setOrgHeader(publicUrl);
+      if (field === 'signature') setOrgSignature(publicUrl);
+
+    } catch (error: any) {
+      alert('Erro ao fazer upload: ' + error.message);
+    } finally {
+      setSavingOrg(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-
-      // Get current session user
       const { data: sessionData } = await supabase.auth.getSession();
       const currentUserId = sessionData.session?.user.id;
 
-      // Select from 'profiles'
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .neq('id', currentUserId || '');
 
-      if (data) {
-        const mappedUsers = data.map((u: any) => ({
-          id: u.id,
-          nome: u.full_name || u.nome || 'Usuário',
-          email: u.email || 'Sem email',
-          cargo: u.role || u.cargo || 'Membro',
-          avatar: u.avatar_url
-        }));
-        setUsers(mappedUsers);
-      } else {
-        console.warn("Table profiles not found or empty. Using empty list.");
-      }
+      setUsers(data?.map((u: any) => ({
+        id: u.id,
+        nome: u.full_name || u.nome || 'Usuário',
+        email: u.email || 'Sem email',
+        cargo: u.role || u.cargo || 'Membro',
+        avatar: u.avatar_url
+      })) || []);
 
     } catch (e) {
       console.error(e);
@@ -109,36 +242,28 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleEditClick = (user: UserData) => {
-    setSelectedUser(user);
-    setIsEditUserModalOpen(true);
-  };
-
-  const handleSendLinkClick = (user: UserData) => {
-    setSelectedUser(user);
-    setIsSendLinkModalOpen(true);
-  };
-
   const handleCreateUser = async () => {
     if (!newUserName || !newUserEmail) {
       alert("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
+    // Ensure we have an organization to attach to
+    if (!orgId) {
+      alert("Erro: Organização não identificada. Recarregue a página.");
+      return;
+    }
+
     setIsCreatingUser(true);
 
     try {
-      // Cria um cliente temporário para não deslogar o admin atual
       const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: false // Importante: não salvar sessão no storage local
-        }
+        auth: { persistSession: false }
       });
 
-      // Cria a conta no Auth do Supabase
       const { data, error } = await tempClient.auth.signUp({
         email: newUserEmail,
-        password: 'sao.temp.password.123', // Senha temporária, será resetada pelo link
+        password: 'sao.temp.password.123',
         options: {
           data: {
             full_name: newUserName,
@@ -150,7 +275,6 @@ const SettingsPage: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Tenta criar o perfil na tabela pública 'profiles' se existir
         const { error: profileError } = await tempClient
           .from('profiles')
           .insert({
@@ -158,34 +282,32 @@ const SettingsPage: React.FC = () => {
             full_name: newUserName,
             email: newUserEmail,
             role: newUserRole,
+            organization_id: orgId, // Attach to current Org
             created_at: new Date().toISOString()
           });
 
-        if (profileError) {
-          console.warn('Erro ao criar perfil público (tabela profiles pode não existir ou RLS bloqueou):', profileError);
-        }
+        if (profileError) console.warn('Erro ao criar perfil:', profileError);
 
-        // Adiciona à lista local para feedback imediato
-        const createdUser: UserData = {
-          id: data.user.id,
+        setUsers(prev => [{
+          id: data.user!.id,
           nome: newUserName,
           email: newUserEmail,
           cargo: newUserRole,
-        };
+        }, ...prev]);
 
-        setUsers(prev => [createdUser, ...prev]);
-
-        // Limpa o formulário
         setNewUserName('');
         setNewUserEmail('');
         setNewUserRole('Assistente Social');
-
-        // Fecha modal de criação
         setIsAddUserModalOpen(false);
-
-        // Prepara e abre modal de envio de link
-        setSelectedUser(createdUser);
-        setIsSendLinkModalOpen(true);
+        if (data.user) {
+          setSelectedUser({
+            id: data.user.id,
+            nome: newUserName,
+            email: newUserEmail,
+            cargo: newUserRole
+          });
+          setIsSendLinkModalOpen(true);
+        }
       }
 
     } catch (err: any) {
@@ -193,6 +315,16 @@ const SettingsPage: React.FC = () => {
     } finally {
       setIsCreatingUser(false);
     }
+  };
+
+  const handleEditClick = (user: UserData) => {
+    setSelectedUser(user);
+    setIsEditUserModalOpen(true);
+  };
+
+  const handleSendLinkClick = (user: UserData) => {
+    setSelectedUser(user);
+    setIsSendLinkModalOpen(true);
   };
 
   const renderAccountTab = () => (
@@ -208,8 +340,8 @@ const SettingsPage: React.FC = () => {
           <button
             onClick={() => setActiveAccountSubTab('logo')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeAccountSubTab === 'logo'
-                ? 'bg-[#EEF2FF] text-[#1E40AF] shadow-sm'
-                : 'text-slate-500 hover:bg-slate-100'
+              ? 'bg-[#EEF2FF] text-[#1E40AF] shadow-sm'
+              : 'text-slate-500 hover:bg-slate-100'
               }`}
           >
             <Sparkles size={18} /> Logotipo e dados
@@ -217,8 +349,8 @@ const SettingsPage: React.FC = () => {
           <button
             onClick={() => setActiveAccountSubTab('cabecalho')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeAccountSubTab === 'cabecalho'
-                ? 'bg-[#EEF2FF] text-[#1E40AF] shadow-sm'
-                : 'text-slate-500 hover:bg-slate-100'
+              ? 'bg-[#EEF2FF] text-[#1E40AF] shadow-sm'
+              : 'text-slate-500 hover:bg-slate-100'
               }`}
           >
             <ImageIcon size={18} /> Cabeçalho
@@ -243,13 +375,19 @@ const SettingsPage: React.FC = () => {
                     <label className="text-sm font-bold text-slate-700">Logotipo da empresa</label>
                     <div className="w-full h-32 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-4 relative group cursor-pointer hover:bg-blue-50/30 transition-all overflow-hidden">
                       <img
-                        src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"
-                        alt="Preview Logo"
+                        src={orgLogo || "https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"}
+                        alt="Logo"
                         className="h-14 w-auto object-contain transition-transform group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
                         <Upload className="text-blue-600" size={24} />
                       </div>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={(e) => handleUpload(e, 'logo')}
+                      />
                     </div>
                     <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
                       Use imagens no formato PNG. com as dimensões 500x80
@@ -259,7 +397,13 @@ const SettingsPage: React.FC = () => {
                   <div className="space-y-3">
                     <label className="text-sm font-bold text-slate-700">Escolha a cor primária da marca</label>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#2549D3] rounded-lg shadow-sm border-2 border-white ring-2 ring-slate-100" />
+                      <input
+                        type="color"
+                        value={orgColor}
+                        onChange={(e) => setOrgColor(e.target.value)}
+                        className="w-10 h-10 rounded-lg shadow-sm border-2 border-white ring-2 ring-slate-100 p-0 cursor-pointer"
+                      />
+                      <span className="text-xs font-bold text-slate-500 uppercase">{orgColor}</span>
                     </div>
                   </div>
                 </div>
@@ -269,40 +413,77 @@ const SettingsPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-slate-600">Nome da Instituição</label>
-                      <input type="text" defaultValue="CAPEC" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                      <input
+                        type="text"
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-slate-600">CNPJ da Instituição</label>
-                      <input type="text" defaultValue="08725760000178" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                      <input
+                        type="text"
+                        value={orgCnpj}
+                        onChange={(e) => setOrgCnpj(formatCNPJ(e.target.value))}
+                        maxLength={18}
+                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all"
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-600">Contato</label>
-                    <input type="text" defaultValue="3134593000" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                    <input
+                      type="text"
+                      value={orgPhone}
+                      onChange={(e) => setOrgPhone(formatPhoneNumber(e.target.value))}
+                      maxLength={15}
+                      className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all"
+                    />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-600">Endereço</label>
-                    <input type="text" placeholder="Rua, Número, Bairro..." className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                    <input
+                      type="text"
+                      value={orgAddress}
+                      onChange={(e) => setOrgAddress(e.target.value)}
+                      placeholder="Rua, Número, Bairro..."
+                      className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-slate-600">Cidade</label>
-                      <input type="text" defaultValue="BELO HORIZONTE" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                      <input
+                        type="text"
+                        value={orgCity}
+                        onChange={(e) => setOrgCity(e.target.value)}
+                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-slate-600">Estado</label>
-                      <input type="text" defaultValue="Minas Gerais" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                      <input
+                        type="text"
+                        value={orgState}
+                        onChange={(e) => setOrgState(e.target.value)}
+                        className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end pt-6 border-t border-slate-50">
-                <button className="px-10 py-3 bg-[#10B981] hover:bg-emerald-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-emerald-500/10 transition-all active:scale-95">
-                  Salvar
+                <button
+                  onClick={saveOrganization}
+                  disabled={savingOrg}
+                  className="px-10 py-3 bg-[#10B981] hover:bg-emerald-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-emerald-500/10 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {savingOrg ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
             </div>
@@ -317,14 +498,20 @@ const SettingsPage: React.FC = () => {
             <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm space-y-10">
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-700">Adicionar cabeçalho dos relatórios</label>
-                <div className="w-full h-48 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-8 cursor-pointer hover:bg-blue-50/30 transition-all group">
+                <div className="w-full h-48 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-8 cursor-pointer hover:bg-blue-50/30 transition-all group relative overflow-hidden">
                   <div className="bg-white p-4 md:p-8 rounded-lg shadow-sm border border-slate-100 transition-transform group-hover:scale-[1.02]">
                     <img
-                      src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"
+                      src={orgHeader || "https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg"}
                       alt="Header Preview"
                       className="h-10 md:h-12 w-auto object-contain"
                     />
                   </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={(e) => handleUpload(e, 'header')}
+                  />
                 </div>
                 <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
                   Use imagens no formato PNG. com as dimensões 500x80
@@ -333,11 +520,23 @@ const SettingsPage: React.FC = () => {
 
               <div className="space-y-4">
                 <label className="text-sm font-bold text-slate-700">Adicionar assinatura dos relatórios</label>
-                <div className="w-56 h-56 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-6 cursor-pointer hover:bg-blue-50/30 transition-all group">
+                <div className="w-56 h-56 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-6 cursor-pointer hover:bg-blue-50/30 transition-all group relative overflow-hidden">
                   <div className="bg-white w-full h-full rounded-lg shadow-sm border border-slate-100 flex flex-col items-center justify-center p-4 transition-transform group-hover:scale-105">
-                    <FileSignature size={48} className="text-slate-300" />
-                    <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase text-center">Assinatura Digital</p>
+                    {orgSignature ? (
+                      <img src={orgSignature} alt="Assinatura" className="max-w-full max-h-full object-contain" />
+                    ) : (
+                      <>
+                        <FileSignature size={48} className="text-slate-300" />
+                        <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase text-center">Assinatura Digital</p>
+                      </>
+                    )}
                   </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={(e) => handleUpload(e, 'signature')}
+                  />
                 </div>
                 <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
                   Use imagens no formato PNG. com as dimensões 150x150
@@ -345,8 +544,12 @@ const SettingsPage: React.FC = () => {
               </div>
 
               <div className="flex justify-end pt-6 border-t border-slate-50">
-                <button className="px-10 py-3 bg-[#10B981] hover:bg-emerald-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-emerald-500/10 transition-all active:scale-95">
-                  Salvar
+                <button
+                  onClick={saveOrganization}
+                  disabled={savingOrg}
+                  className="px-10 py-3 bg-[#10B981] hover:bg-emerald-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-emerald-500/10 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {savingOrg ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
             </div>

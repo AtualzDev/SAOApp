@@ -65,6 +65,12 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
   const [cancelFeedback, setCancelFeedback] = useState<string | null>(null);
 
+  const [requests, setRequests] = useState<Request[]>([
+    { id: '1', date: '06/01/2026', user: 'Ana Paula (A.S.)', beneficiary: 'Maria Auxiliadora', items: '2x Cesta Básica, 1x Kit Higiene', status: 'Aguardando' },
+    { id: '2', date: '05/01/2026', user: 'Beatriz Lima (A.S.)', beneficiary: 'João Silva', items: '1x Cadeira de Rodas Pro', status: 'Entregue' },
+    { id: '3', date: '04/01/2026', user: 'Ana Paula (A.S.)', beneficiary: 'Carlos Mendes', items: '5x Fralda G, 2x Leite Especial', status: 'Em Separação' },
+  ]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
 
@@ -293,9 +299,9 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
                 <td className="px-8 py-5 text-xs text-slate-500 font-medium max-w-xs">{req.items}</td>
                 <td className="px-8 py-5">
                   <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${req.status === 'Entregue' ? 'bg-emerald-100 text-emerald-600' :
-                      req.status === 'Cancelado' ? 'bg-rose-100 text-rose-600' :
-                        req.status === 'Aguardando' ? 'bg-amber-100 text-amber-600' :
-                          'bg-blue-100 text-blue-600'
+                    req.status === 'Cancelado' ? 'bg-rose-100 text-rose-600' :
+                      req.status === 'Aguardando' ? 'bg-amber-100 text-amber-600' :
+                        'bg-blue-100 text-blue-600'
                     }`}>{req.status}</span>
                 </td>
                 <td className="px-8 py-5 text-right">
@@ -357,7 +363,7 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
           {showSearchResults && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-[24px] shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
               <div className="p-2">
-                {filteredBeneficiaries.map((b) => (
+                {searchResults.map((b) => (
                   <button
                     key={b.id}
                     onClick={() => handleSelectBeneficiary(b)}

@@ -19,7 +19,8 @@ import {
   Map,
   ClipboardList,
   History,
-  Activity
+  Activity,
+  LifeBuoy
 } from 'lucide-react';
 import { Launch, SidebarItem } from './types';
 
@@ -69,10 +70,11 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     children: [
       { id: 'soc-visao-geral', label: 'Visão Geral', icon: <LayoutDashboard size={18} />, path: '/assistencia/visao-geral' },
       { id: 'soc-historico', label: 'Histórico', icon: <History size={18} />, path: '/assistencia/historico' },
-      { id: 'soc-solicitacoes', label: 'Solicitações', icon: <ClipboardList size={18} />, path: '/assistencia/solicitacoes' },
+      { id: 'soc-solicitacoes', label: 'Solicitacoes', icon: <ClipboardList size={18} />, path: '/assistencia/solicitacoes' },
       { id: 'soc-acompanhamento', label: 'Acompanhamento', icon: <Activity size={18} />, path: '/assistencia/acompanhamento' },
     ]
   },
+  { id: 'suporte', label: 'Suporte', icon: <LifeBuoy size={20} />, path: '/suporte' },
   { id: 'gestor', label: 'Gestor', icon: <ShieldCheck size={20} />, path: '/gestor' },
   { id: 'notificacao', label: 'Notificação', icon: <Bell size={20} />, path: '/notificacao', badge: 0 },
   { id: 'configuracoes', label: 'Configurações', icon: <Settings size={20} />, path: '/configuracoes' },

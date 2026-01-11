@@ -19,10 +19,16 @@ import NotificationPopover from './components/NotificationPopover';
 import LoginPage from './components/LoginPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
 import ResetPasswordPage from './components/ResetPasswordPage';
+import PrivacyPolicyPage from './components/PrivacyPolicyPage';
+import TermsOfUsePage from './components/TermsOfUsePage';
 import Dashboard from './components/Dashboard';
 import Agenda from './components/Agenda';
 import UserProfilePage from './components/UserProfilePage';
 import SettingsPage from './components/SettingsPage';
+import RoutePage from './components/RoutePage';
+import ReportsPage from './components/ReportsPage';
+import ManagementDashboard from './components/ManagementDashboard';
+import SupportPage from './components/SupportPage';
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map } from 'lucide-react';
 import { supabase } from './services/supabase';
@@ -30,10 +36,20 @@ import { supabase } from './services/supabase';
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password'>('login');
+  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password' | 'privacy-policy' | 'terms-of-use'>('login');
   const [activeTab, setActiveTab] = useState('inicio');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isManagementMode, setIsManagementMode] = useState(false);
+
+  // Monitora se entra no modo gestão
+  useEffect(() => {
+    if (activeTab === 'gestor' || activeTab.startsWith('gestor-')) {
+      setIsManagementMode(true);
+    } else {
+      setIsManagementMode(false);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     // Check initial session
@@ -115,6 +131,14 @@ const App: React.FC = () => {
     );
   }
 
+  // Handle Privacy Policy and Terms of Use relative pages (without login requirment)
+  if (authView === 'privacy-policy') {
+    return <PrivacyPolicyPage onBack={() => setAuthView('login')} />;
+  }
+  if (authView === 'terms-of-use') {
+    return <TermsOfUsePage onBack={() => setAuthView('login')} />;
+  }
+
   if (!isLoggedIn) {
     return (
       <div className="h-screen w-full animate-in fade-in duration-700">
@@ -130,17 +154,29 @@ const App: React.FC = () => {
       return <UserProfilePage />;
     }
 
-    if (activeTab === 'inicio') {
-      return <Dashboard />;
+    if (activeTab === 'suporte' || activeTab === 'gestor-suporte') {
+      return <SupportPage />;
+    }
+
+    if (activeTab === 'inicio' || activeTab === 'gestor-painel' || activeTab === 'gestor') {
+      return isManagementMode ? <ManagementDashboard /> : <Dashboard />;
     }
 
     if (activeTab === 'agenda') {
       return <Agenda />;
     }
 
-    // Lógica para o Estoque (Se for o item pai ou dashboard específico)
+    if (activeTab === 'rotas') {
+      return <RoutePage />;
+    }
+
+    if (activeTab === 'relatorios') {
+      return <ReportsPage />;
+    }
+
+    // Lógica para o Estoque
     if (activeTab === 'estoque' || activeTab === 'estoque-visao-geral') {
-      return <StockDashboard />;
+      return <StockDashboard onNavigate={(id) => setActiveTab(id)} />;
     }
 
     // Mapeamento de submenus de Assistência Social
@@ -160,7 +196,7 @@ const App: React.FC = () => {
       }} />;
     }
 
-    if (activeTab === 'auditoria') {
+    if (activeTab === 'auditoria' || activeTab === 'estoque-auditoria') {
       return <AuditPage />;
     }
 
@@ -179,7 +215,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'setores') {
+    if (activeTab === 'setores' || activeTab === 'estoque-setores') {
       if (isFormOpen) {
         return <SectorForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -207,7 +243,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'saidas') {
+    if (activeTab === 'saidas' || activeTab === 'estoque-saidas') {
       if (isFormOpen) {
         return <ExitForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -235,7 +271,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'categorias') {
+    if (activeTab === 'categorias' || activeTab === 'estoque-categorias') {
       if (isFormOpen) {
         return <CategoryForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -263,7 +299,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'produtos') {
+    if (activeTab === 'produtos' || activeTab === 'estoque-produtos') {
       if (isFormOpen) {
         return <ProductForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -291,7 +327,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'entradas') {
+    if (activeTab === 'entradas' || activeTab === 'estoque-entradas') {
       if (isFormOpen) {
         return <LaunchForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -318,16 +354,11 @@ const App: React.FC = () => {
     }
 
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
+      <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center animate-in fade-in duration-300">
         <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4"><Plus size={32} /></div>
-        <h2 className="text-xl font-bold text-slate-600">Em Desenvolvimento</h2>
-        <p className="max-w-xs mt-2">A seção de "{activeTab}" está sendo preparada para o próximo lançamento.</p>
-        <button
-          onClick={() => setActiveTab('inicio')}
-          className="mt-6 text-[#1E40AF] font-bold hover:underline"
-        >
-          Voltar ao Início
-        </button>
+        <h2 className="text-xl font-bold text-slate-600">Módulo em Desenvolvimento</h2>
+        <p className="max-w-xs mt-2">A seção de "{activeTab}" está sendo preparada para o próximo lançamento da plataforma.</p>
+        <button onClick={() => { setActiveTab('inicio'); setIsManagementMode(false); }} className="mt-6 text-[#1E40AF] font-bold hover:underline">Voltar ao Início</button>
       </div>
     );
   };
@@ -337,18 +368,38 @@ const App: React.FC = () => {
       setIsNotificationOpen(!isNotificationOpen);
       return;
     }
+
+    // Lógica para desmarcar o modo Gestor
+    if (id === 'gestor' && isManagementMode) {
+      setActiveTab('inicio');
+      setIsManagementMode(false);
+      setIsFormOpen(false);
+      setIsNotificationOpen(false);
+      return;
+    }
+
     if (id === 'logout') {
       await supabase.auth.signOut();
       return;
     }
+
     setActiveTab(id);
     setIsFormOpen(false);
     setIsNotificationOpen(false);
   };
 
   return (
-    <div className="flex h-screen bg-white text-slate-900 overflow-hidden font-['Inter'] animate-in fade-in duration-700">
-      <Sidebar activeId={activeTab} onSelect={handleSidebarSelect} />
+    <div className="flex h-screen bg-white text-slate-900 overflow-hidden font-['Inter']">
+      {/* 
+         Combined logic:
+         HEAD used: activeId logic
+         main used: activeId + isManagementMode logic
+      */}
+      <Sidebar
+        activeId={activeTab}
+        onSelect={handleSidebarSelect}
+        isManagementMode={isManagementMode}
+      />
       {isNotificationOpen && <NotificationPopover onClose={() => setIsNotificationOpen(false)} />}
       <main className="flex-1 flex flex-col overflow-y-auto bg-[#F8FAFC]">
         {renderContent()}

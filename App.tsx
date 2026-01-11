@@ -29,7 +29,8 @@ import SettingsPage from './components/SettingsPage';
 import RoutePage from './components/RoutePage';
 import ReportsPage from './components/ReportsPage';
 import ManagementDashboard from './components/ManagementDashboard';
-import SupportPage from './components/SupportPage'; // Nova importação
+import SupportPage from './components/SupportPage';
+import FinancePage from './components/FinancePage'; // Nova importação
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map, Users } from 'lucide-react';
 
@@ -80,6 +81,10 @@ const App: React.FC = () => {
 
     if (activeTab === 'suporte' || activeTab === 'gestor-suporte') {
       return <SupportPage />;
+    }
+
+    if (activeTab === 'financeiro') {
+      return <FinancePage />;
     }
 
     if (activeTab === 'inicio' || activeTab === 'gestor-painel' || activeTab === 'gestor') {
@@ -204,7 +209,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => setIsFormOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 font-bold text-sm">
+              <button className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 font-bold text-sm" onClick={() => setIsFormOpen(true)}>
                 <Plus size={18} /> Nova Categoria
               </button>
             </div>

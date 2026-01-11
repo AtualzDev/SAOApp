@@ -18,10 +18,16 @@ import {
   Mail,
   CheckCircle2,
   ChevronRight,
-  Send
+  Send,
+  Sparkles,
+  Image as ImageIcon,
+  HelpCircle,
+  Upload,
+  FileSignature
 } from 'lucide-react';
 
 type SettingsTab = 'conta' | 'agenda' | 'assinatura' | 'cestas' | 'cid' | 'fornecedores' | 'usuarios' | 'whatsapp' | 'logs';
+type AccountSubTab = 'logo' | 'cabecalho';
 
 interface UserData {
   id: string;
@@ -32,7 +38,8 @@ interface UserData {
 }
 
 const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('usuarios');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('conta');
+  const [activeAccountSubTab, setActiveAccountSubTab] = useState<AccountSubTab>('logo');
   
   // States para Modais
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
@@ -75,6 +82,169 @@ const SettingsPage: React.FC = () => {
     setSelectedUser(user);
     setIsSendLinkModalOpen(true);
   };
+
+  const renderAccountTab = () => (
+    <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in duration-500 items-start">
+      {/* Sidebar de Sub-navegação */}
+      <div className="w-full lg:w-64 space-y-6">
+        <div>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Dados da conta</h2>
+          <p className="text-xs text-slate-400 font-medium">Configurações Gerais</p>
+        </div>
+        
+        <nav className="space-y-1">
+          <button 
+            onClick={() => setActiveAccountSubTab('logo')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+              activeAccountSubTab === 'logo' 
+                ? 'bg-[#EEF2FF] text-[#1E40AF] shadow-sm' 
+                : 'text-slate-500 hover:bg-slate-100'
+            }`}
+          >
+            <Sparkles size={18} /> Logotipo e dados
+          </button>
+          <button 
+            onClick={() => setActiveAccountSubTab('cabecalho')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+              activeAccountSubTab === 'cabecalho' 
+                ? 'bg-[#EEF2FF] text-[#1E40AF] shadow-sm' 
+                : 'text-slate-500 hover:bg-slate-100'
+            }`}
+          >
+            <ImageIcon size={18} /> Cabeçalho
+          </button>
+        </nav>
+      </div>
+
+      {/* Conteúdo Principal do Sub-tab */}
+      <div className="flex-1 w-full space-y-8">
+        {activeAccountSubTab === 'logo' ? (
+          <section className="space-y-6">
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">Informações da ONG</h3>
+              <p className="text-sm text-slate-400 font-medium">Altere nome e endereço a instituição</p>
+            </div>
+
+            <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                {/* Lado Esquerdo: Logo e Cor */}
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-slate-700">Logotipo da empresa</label>
+                    <div className="w-full h-32 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-4 relative group cursor-pointer hover:bg-blue-50/30 transition-all overflow-hidden">
+                      <img 
+                        src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg" 
+                        alt="Preview Logo" 
+                        className="h-14 w-auto object-contain transition-transform group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+                         <Upload className="text-blue-600" size={24} />
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                      Use imagens no formato PNG. com as dimensões 500x80
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-slate-700">Escolha a cor primária da marca</label>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#2549D3] rounded-lg shadow-sm border-2 border-white ring-2 ring-slate-100" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lado Direito: Inputs */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Nome da Instituição</label>
+                      <input type="text" defaultValue="CAPEC" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">CNPJ da Instituição</label>
+                      <input type="text" defaultValue="08725760000178" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-600">Contato</label>
+                    <input type="text" defaultValue="3134593000" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-600">Endereço</label>
+                    <input type="text" placeholder="Rua, Número, Bairro..." className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Cidade</label>
+                      <input type="text" defaultValue="BELO HORIZONTE" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Estado</label>
+                      <input type="text" defaultValue="Minas Gerais" className="w-full h-11 px-4 bg-white border border-slate-200 rounded-lg text-sm font-medium outline-none focus:border-blue-400 transition-all" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-slate-50">
+                <button className="px-10 py-3 bg-[#10B981] hover:bg-emerald-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-emerald-500/10 transition-all active:scale-95">
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="space-y-6">
+            <div className="space-y-1">
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">Cabeçalho</h3>
+              <p className="text-sm text-slate-400 font-medium">Altere o cabeçalho dos seus relatórios</p>
+            </div>
+
+            <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm space-y-10">
+              <div className="space-y-4">
+                <label className="text-sm font-bold text-slate-700">Adicionar cabeçalho dos relatórios</label>
+                <div className="w-full h-48 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-8 cursor-pointer hover:bg-blue-50/30 transition-all group">
+                   <div className="bg-white p-4 md:p-8 rounded-lg shadow-sm border border-slate-100 transition-transform group-hover:scale-[1.02]">
+                     <img 
+                      src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg" 
+                      alt="Header Preview" 
+                      className="h-10 md:h-12 w-auto object-contain"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                  Use imagens no formato PNG. com as dimensões 500x80
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-sm font-bold text-slate-700">Adicionar assinatura dos relatórios</label>
+                <div className="w-56 h-56 border-2 border-dashed border-blue-600/30 bg-slate-50/20 rounded-xl flex items-center justify-center p-6 cursor-pointer hover:bg-blue-50/30 transition-all group">
+                   <div className="bg-white w-full h-full rounded-lg shadow-sm border border-slate-100 flex flex-col items-center justify-center p-4 transition-transform group-hover:scale-105">
+                      <FileSignature size={48} className="text-slate-300" />
+                      <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase text-center">Assinatura Digital</p>
+                   </div>
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                  Use imagens no formato PNG. com as dimensões 150x150
+                </p>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-slate-50">
+                <button className="px-10 py-3 bg-[#10B981] hover:bg-emerald-600 text-white rounded-lg font-bold text-sm shadow-lg shadow-emerald-500/10 transition-all active:scale-95">
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
+  );
 
   const renderUsersTab = () => (
     <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
@@ -168,12 +338,12 @@ const SettingsPage: React.FC = () => {
     <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full relative">
       <div className="flex items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Configurações</h1>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Configurações</h1>
           <p className="text-sm text-slate-400 font-medium">Gerencie as preferências e usuários do sistema</p>
         </div>
       </div>
 
-      <div className="bg-slate-100/50 p-1.5 rounded-[20px] flex items-center gap-1 overflow-x-auto scrollbar-hide border border-slate-100">
+      <div className="bg-slate-100/50 p-1 rounded-2xl flex items-center gap-1 overflow-x-auto scrollbar-hide border border-slate-100">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -190,9 +360,10 @@ const SettingsPage: React.FC = () => {
       </div>
 
       <div className="mt-8">
+        {activeTab === 'conta' && renderAccountTab()}
         {activeTab === 'usuarios' && renderUsersTab()}
         
-        {activeTab !== 'usuarios' && (
+        {activeTab !== 'conta' && activeTab !== 'usuarios' && (
           <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-20 flex flex-col items-center justify-center text-center animate-in fade-in duration-300">
              <div className="p-6 bg-slate-50 text-slate-200 rounded-full mb-6">
                 {activeTab === 'whatsapp' && <MessageSquare size={48} />}
@@ -202,7 +373,6 @@ const SettingsPage: React.FC = () => {
                 {activeTab === 'cestas' && <Package size={48} />}
                 {activeTab === 'cid' && <Stethoscope size={48} />}
                 {activeTab === 'fornecedores' && <ShieldCheck size={48} />}
-                {activeTab === 'conta' && <User size={48} />}
              </div>
              <h3 className="text-xl font-bold text-slate-800">Em Desenvolvimento</h3>
              <p className="text-sm text-slate-400 mt-2 max-w-xs">A seção de "{tabs.find(t => t.id === activeTab)?.label}" está sendo preparada para o próximo lançamento.</p>
@@ -211,6 +381,7 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Modais de Usuários */}
+      {/* ... (Modais de usuários permanecem inalterados) */}
       
       {/* Modal: Novo Usuário */}
       {isAddUserModalOpen && (
@@ -361,7 +532,6 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

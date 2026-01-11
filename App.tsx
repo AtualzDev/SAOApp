@@ -19,6 +19,7 @@ import StockDashboard from './components/StockDashboard';
 import NotificationPopover from './components/NotificationPopover';
 import LoginPage from './components/LoginPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
+import ResetPasswordPage from './components/ResetPasswordPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsOfUsePage from './components/TermsOfUsePage';
 import Dashboard from './components/Dashboard';
@@ -30,7 +31,7 @@ import { Plus, Package, ClipboardList, PackageMinus, Map, Users } from 'lucide-r
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'privacy-policy' | 'terms-of-use'>('login');
+  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password' | 'privacy-policy' | 'terms-of-use'>('login');
   const [activeTab, setActiveTab] = useState('inicio');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -38,6 +39,9 @@ const App: React.FC = () => {
   if (!isLoggedIn) {
     if (authView === 'forgot-password') {
       return <ForgotPasswordPage onBackToLogin={() => setAuthView('login')} />;
+    }
+    if (authView === 'reset-password') {
+      return <ResetPasswordPage onBackToLogin={() => setAuthView('login')} onResetComplete={() => setAuthView('login')} />;
     }
     if (authView === 'privacy-policy') {
       return <PrivacyPolicyPage onBack={() => setAuthView('login')} />;
@@ -70,7 +74,7 @@ const App: React.FC = () => {
 
     // Lógica para o Estoque (Se for o item pai ou dashboard específico)
     if (activeTab === 'estoque' || activeTab === 'estoque-visao-geral') {
-      return <StockDashboard />;
+      return <StockDashboard onNavigate={(id) => setActiveTab(id)} />;
     }
 
     // Mapeamento de submenus de Assistência Social
@@ -90,7 +94,7 @@ const App: React.FC = () => {
       }} />;
     }
 
-    if (activeTab === 'auditoria') {
+    if (activeTab === 'auditoria' || activeTab === 'estoque-auditoria') {
       return <AuditPage />;
     }
 
@@ -109,7 +113,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'setores') {
+    if (activeTab === 'setores' || activeTab === 'estoque-setores') {
       if (isFormOpen) {
         return <SectorForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -134,7 +138,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'saidas') {
+    if (activeTab === 'saidas' || activeTab === 'estoque-saidas') {
       if (isFormOpen) {
         return <ExitForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -159,7 +163,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'categorias') {
+    if (activeTab === 'categorias' || activeTab === 'estoque-categorias') {
       if (isFormOpen) {
         return <CategoryForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -184,7 +188,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'produtos') {
+    if (activeTab === 'produtos' || activeTab === 'estoque-produtos') {
       if (isFormOpen) {
         return <ProductForm onCancel={() => setIsFormOpen(false)} />;
       }
@@ -209,7 +213,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (activeTab === 'entradas') {
+    if (activeTab === 'entradas' || activeTab === 'estoque-entradas') {
       if (isFormOpen) {
         return <LaunchForm onCancel={() => setIsFormOpen(false)} />;
       }

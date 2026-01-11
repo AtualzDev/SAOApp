@@ -29,6 +29,7 @@ import SettingsPage from './components/SettingsPage';
 import RoutePage from './components/RoutePage';
 import ReportsPage from './components/ReportsPage';
 import ManagementDashboard from './components/ManagementDashboard';
+import SupportPage from './components/SupportPage'; // Nova importação
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map, Users } from 'lucide-react';
 
@@ -75,6 +76,10 @@ const App: React.FC = () => {
   const renderContent = () => {
     if (activeTab === 'perfil') {
       return <UserProfilePage />;
+    }
+
+    if (activeTab === 'suporte' || activeTab === 'gestor-suporte') {
+      return <SupportPage />;
     }
 
     if (activeTab === 'inicio' || activeTab === 'gestor-painel' || activeTab === 'gestor') {

@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  HeartHandshake, 
-  HandHelping, 
-  Stethoscope, 
-  History, 
-  Plus, 
-  Search, 
-  Clock, 
-  CheckCircle2, 
+import {
+  HeartHandshake,
+  HandHelping,
+  Stethoscope,
+  History,
+  Plus,
+  Search,
+  Clock,
+  CheckCircle2,
   AlertCircle,
   Hospital,
   ArrowRight,
@@ -59,12 +59,12 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isServiceHubOpen, setIsServiceHubOpen] = useState(false);
-  
+
   const [requestModalMode, setRequestModalMode] = useState<'create' | 'edit'>('create');
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
   const [cancelFeedback, setCancelFeedback] = useState<string | null>(null);
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
 
@@ -78,35 +78,90 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
     if (onTabChange) onTabChange(tab);
   };
 
-  const mockBeneficiaries: Beneficiary[] = [
-    { id: '1', nome: 'Maria Auxiliadora dos Santos', status: 'Assistido', cpf: '745.659.076-15', contato: '(31) 9 9846.5342' },
-    { id: '2', nome: 'João Silva Oliveira', status: 'Assistido', cpf: '123.456.789-00', contato: '(31) 9 8877.6655' },
-    { id: '3', nome: 'Carlos Mendes', status: 'Assistido', cpf: '987.654.321-11', contato: '(31) 9 7766.5544' },
-  ];
-
-  const filteredBeneficiaries = mockBeneficiaries.filter(b => 
-    b.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    b.cpf.includes(searchTerm)
-  );
-
-  const [requests, setRequests] = useState<Request[]>([
-    { id: '1', date: '06/01/2026', user: 'Ana Paula (A.S.)', beneficiary: 'Maria Auxiliadora', items: '2x Cesta Básica, 1x Kit Higiene', status: 'Aguardando' },
-    { id: '2', date: '05/01/2026', user: 'Beatriz Lima (A.S.)', beneficiary: 'João Silva', items: '1x Cadeira de Rodas Pro', status: 'Entregue' },
-    { id: '3', date: '04/01/2026', user: 'Ana Paula (A.S.)', beneficiary: 'Carlos Mendes', items: '5x Fralda G, 2x Leite Especial', status: 'Em Separação' },
-  ]);
+  const [searchResults, setSearchResults] = useState<Beneficiary[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    if (cancelFeedback) {
-      const timer = setTimeout(() => setCancelFeedback(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [cancelFeedback]);
+    const searchBeneficiaries = async () => {
+      if (searchTerm.length <= 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        // Import supabase if not available in this scope, but assumed available or will be added to imports
+        // I need to add import { supabase } from '../services/supabase'; if not present
+        const { supabase } = await import('../services/supabase');
+
+        const { data, error } = await supabase
+          .from('ASSISTIDOS')
+          .select('id, nome, cpf, status')
+          .or(`nome.ilike.%${searchTerm}%,cpf.ilike.%${searchTerm}%`)
+          .limit(5);
+
+        if (data) {
+          setSearchResults(data.map(b => ({
+            id: b.id.toString(), // Ensure string if bigint
+            nome: b.nome,
+            status: b.status as 'Assistido' | 'Desativado',
+            cpf: b.cpf,
+            contato: '' // Contato might not be in the search result selection, can be added if needed
+          })));
+        }
+      } catch (error) {
+        console.error("Erro na busca:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      searchBeneficiaries();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   const handleSelectBeneficiary = (b: Beneficiary) => {
     setSelectedBeneficiary(b);
     setSearchTerm(b.nome);
     setShowSearchResults(false);
   };
+
+  // ... (rest of functions)
+
+  // In the render return:
+  {/* Sugestões de Busca */ }
+  {
+    showSearchResults && (
+      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-[24px] shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+        <div className="p-2">
+          {isSearching && <p className="p-4 text-center text-xs text-slate-400">Buscando...</p>}
+          {!isSearching && searchResults.length === 0 && <p className="p-4 text-center text-xs text-slate-400">Nenhum beneficiário encontrado.</p>}
+
+          {searchResults.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => handleSelectBeneficiary(b)}
+              className="w-full flex items-center justify-between p-4 hover:bg-slate-50 rounded-2xl transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                  <User size={20} />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-slate-700">{b.nome}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">CPF: {b.cpf}</p>
+                </div>
+              </div>
+              <ChevronRight size={18} className="text-slate-200 group-hover:text-blue-500" />
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   const handleStartService = () => {
     setIsServiceHubOpen(true);
@@ -196,13 +251,13 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
           </div>
         </div>
         <div className="lg:col-span-4 space-y-6">
-           <div className="bg-rose-50 border border-rose-100 p-6 rounded-[32px]">
-              <h3 className="text-rose-800 font-bold text-sm mb-4 flex items-center gap-2"><AlertCircle size={18} /> Prioridade Alta</h3>
-              <div className="space-y-4">
-                 <div className="p-3 bg-white rounded-2xl shadow-sm border border-rose-100"><p className="text-[11px] font-bold text-slate-800">Renata Oliveira</p><p className="text-[10px] text-rose-600 mt-1">Solicitação de cadeira de rodas urgente.</p></div>
-                 <div className="p-3 bg-white rounded-2xl shadow-sm border border-rose-100"><p className="text-[11px] font-bold text-slate-800">Antônio José</p><p className="text-[10px] text-rose-600 mt-1">Vencimento de laudo social em 2 dias.</p></div>
-              </div>
-           </div>
+          <div className="bg-rose-50 border border-rose-100 p-6 rounded-[32px]">
+            <h3 className="text-rose-800 font-bold text-sm mb-4 flex items-center gap-2"><AlertCircle size={18} /> Prioridade Alta</h3>
+            <div className="space-y-4">
+              <div className="p-3 bg-white rounded-2xl shadow-sm border border-rose-100"><p className="text-[11px] font-bold text-slate-800">Renata Oliveira</p><p className="text-[10px] text-rose-600 mt-1">Solicitação de cadeira de rodas urgente.</p></div>
+              <div className="p-3 bg-white rounded-2xl shadow-sm border border-rose-100"><p className="text-[11px] font-bold text-slate-800">Antônio José</p><p className="text-[10px] text-rose-600 mt-1">Vencimento de laudo social em 2 dias.</p></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -237,15 +292,14 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
                 <td className="px-8 py-5 text-sm font-semibold text-slate-600">{req.beneficiary}</td>
                 <td className="px-8 py-5 text-xs text-slate-500 font-medium max-w-xs">{req.items}</td>
                 <td className="px-8 py-5">
-                   <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${
-                     req.status === 'Entregue' ? 'bg-emerald-100 text-emerald-600' :
-                     req.status === 'Cancelado' ? 'bg-rose-100 text-rose-600' :
-                     req.status === 'Aguardando' ? 'bg-amber-100 text-amber-600' :
-                     'bg-blue-100 text-blue-600'
-                   }`}>{req.status}</span>
+                  <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${req.status === 'Entregue' ? 'bg-emerald-100 text-emerald-600' :
+                      req.status === 'Cancelado' ? 'bg-rose-100 text-rose-600' :
+                        req.status === 'Aguardando' ? 'bg-amber-100 text-amber-600' :
+                          'bg-blue-100 text-blue-600'
+                    }`}>{req.status}</span>
                 </td>
                 <td className="px-8 py-5 text-right">
-                   <button onClick={() => handleViewDetails(req)} className="text-blue-600 font-bold text-xs hover:underline decoration-2 underline-offset-4">Ver Detalhes</button>
+                  <button onClick={() => handleViewDetails(req)} className="text-blue-600 font-bold text-xs hover:underline decoration-2 underline-offset-4">Ver Detalhes</button>
                 </td>
               </tr>
             ))}
@@ -287,15 +341,15 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
         <div className="relative max-w-2xl">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <input 
-              type="text" 
-              placeholder="Buscar assistido para ver prontuário social..." 
+            <input
+              type="text"
+              placeholder="Buscar assistido para ver prontuário social..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setShowSearchResults(e.target.value.length > 2);
               }}
-              className="w-full h-14 pl-12 pr-4 bg-white border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all shadow-sm" 
+              className="w-full h-14 pl-12 pr-4 bg-white border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all shadow-sm"
             />
           </div>
 
@@ -304,7 +358,7 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-[24px] shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
               <div className="p-2">
                 {filteredBeneficiaries.map((b) => (
-                  <button 
+                  <button
                     key={b.id}
                     onClick={() => handleSelectBeneficiary(b)}
                     className="w-full flex items-center justify-between p-4 hover:bg-slate-50 rounded-2xl transition-all group"
@@ -331,26 +385,26 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
           <div className="max-w-4xl bg-white p-6 rounded-[32px] border border-blue-100 shadow-xl shadow-blue-500/5 animate-in slide-in-from-left-4 duration-500 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">
               <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-[20px] flex items-center justify-center border border-blue-100">
-                 <User size={32} />
+                <User size={32} />
               </div>
               <div>
                 <h3 className="text-lg font-black text-slate-800 tracking-tight">{selectedBeneficiary.nome}</h3>
                 <div className="flex items-center gap-4 mt-0.5">
-                   <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">CPF: {selectedBeneficiary.cpf}</span>
-                   <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                   <span className="text-xs text-blue-600 font-bold uppercase tracking-widest">{selectedBeneficiary.status}</span>
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">CPF: {selectedBeneficiary.cpf}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                  <span className="text-xs text-blue-600 font-bold uppercase tracking-widest">{selectedBeneficiary.status}</span>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <button 
+              <button
                 onClick={() => setSelectedBeneficiary(null)}
                 className="p-4 text-slate-400 hover:text-rose-500 bg-slate-50 rounded-2xl transition-all"
               >
                 <X size={20} />
               </button>
-              <button 
+              <button
                 onClick={handleStartService}
                 className="flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-4 bg-[#1E40AF] text-white rounded-[24px] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-800 transition-all active:scale-95"
               >
@@ -363,40 +417,40 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
 
       {activeSubTab === 'visao-geral' && renderOverview()}
       {activeSubTab === 'solicitacoes' && renderRequests()}
-      
+
       {/* Fallback de telas vazias */}
       {(activeSubTab === 'acompanhamento-externo' || activeSubTab === 'historico') && (
-         <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-20 flex flex-col items-center justify-center text-center">
-            {activeSubTab === 'historico' ? <History size={48} className="text-slate-200 mb-4" /> : <Clock size={48} className="text-slate-200 mb-4" />}
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Carregando informações...</p>
-         </div>
+        <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-20 flex flex-col items-center justify-center text-center">
+          {activeSubTab === 'historico' ? <History size={48} className="text-slate-200 mb-4" /> : <Clock size={48} className="text-slate-200 mb-4" />}
+          <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Carregando informações...</p>
+        </div>
       )}
 
       {/* Modais de Fluxo */}
-      <SocialRequestModal 
-        isOpen={isRequestModalOpen} 
-        onClose={() => setIsRequestModalOpen(false)} 
-        onSave={handleSaveRequest} 
-        mode={requestModalMode} 
-        initialData={selectedRequest} 
-      />
-      
-      <SocialRequestDetailsModal 
-        isOpen={isDetailsModalOpen} 
-        onClose={() => setIsDetailsModalOpen(false)} 
-        onEdit={handleEditRequest} 
-        onCancel={handleCancelRequest} 
-        request={selectedRequest} 
-      />
-      
-      <CancelRequestModal 
-        isOpen={isCancelModalOpen} 
-        onClose={() => setIsCancelModalOpen(false)} 
-        onConfirm={handleConfirmCancel} 
-        requestId={selectedRequest?.id || ''} 
+      <SocialRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        onSave={handleSaveRequest}
+        mode={requestModalMode}
+        initialData={selectedRequest}
       />
 
-      <BeneficiaryServiceHubModal 
+      <SocialRequestDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        onEdit={handleEditRequest}
+        onCancel={handleCancelRequest}
+        request={selectedRequest}
+      />
+
+      <CancelRequestModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleConfirmCancel}
+        requestId={selectedRequest?.id || ''}
+      />
+
+      <BeneficiaryServiceHubModal
         isOpen={isServiceHubOpen}
         onClose={() => setIsServiceHubOpen(false)}
         beneficiary={selectedBeneficiary}

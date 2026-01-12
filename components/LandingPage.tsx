@@ -84,6 +84,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
   const [isCtaModalOpen, setIsCtaModalOpen] = useState(false);
   const [resourceModal, setResourceModal] = useState<ModalContent | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [phoneValue, setPhoneValue] = useState('');
 
   const primaryBlue = "#3b32cc"; 
   const secondaryBlue = "#ced4ff"; 
@@ -113,6 +114,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
     { label: 'Depoimentos', href: '#depoimentos' },
     { label: 'Contato', href: '#contato' },
   ];
+
+  // Função para aplicar máscara de telefone (XX) 0 0000-0000
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é dígito
+    if (value.length > 11) value = value.slice(0, 11); // Limita a 11 dígitos
+
+    let formattedValue = '';
+    if (value.length > 0) {
+      formattedValue = `(${value.slice(0, 2)}`;
+      if (value.length > 2) {
+        formattedValue += `) ${value.slice(2, 3)}`;
+        if (value.length > 3) {
+          formattedValue += ` ${value.slice(3, 7)}`;
+          if (value.length > 7) {
+            formattedValue += `-${value.slice(7, 11)}`;
+          }
+        }
+      }
+    }
+    setPhoneValue(formattedValue);
+  };
 
   return (
     <div className="min-h-screen bg-white font-['Inter'] selection:bg-[#ced4ff] overflow-x-hidden">
@@ -179,13 +201,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       {/* Hero Section */}
       <SectionWrapper className="pt-48 pb-20 px-6 md:px-12 lg:px-24 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.15] tracking-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.15] tracking-tight text-center lg:text-left">
             Acabe com a papelada e transforme sua ONG em uma operação eficiente.
           </h1>
-          <p className="text-slate-500 text-lg md:text-xl font-medium max-w-xl leading-relaxed">
+          <p className="text-slate-500 text-lg md:text-xl font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed text-center lg:text-left">
             Gerencie os seus atendimentos e atividades sociais de forma organizada, online e sem complicações.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
             <button 
               onClick={() => setIsCtaModalOpen(true)}
               className="px-10 py-4 bg-[#3b32cc] text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-xl shadow-[#3b32cc]/20 hover:bg-indigo-800 transition-all active:scale-95"
@@ -282,8 +304,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
         <div className="max-w-7xl mx-auto space-y-20">
           <div className="text-center space-y-6">
             <p className="text-[10px] font-black text-[#3b32cc] uppercase tracking-[0.3em]">Gerenciamento Inteligente</p>
-            <h2 className="text-5xl font-black text-slate-800 tracking-tight">Necessidades da sua ONG</h2>
-            <p className="text-slate-400 max-w-xl mx-auto font-medium">Soluções pensadas para humanizar o atendimento e otimizar processos.</p>
+            <h2 className="text-5xl font-black text-slate-800 tracking-tight text-center">Necessidades da sua ONG</h2>
+            <p className="text-slate-400 max-w-xl mx-auto font-medium text-center">Soluções pensadas para humanizar o atendimento e otimizar processos.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -322,7 +344,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                  <div className="text-white opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all cursor-default">
                    {item.icon}
                  </div>
-                 <p className="text-white text-xs font-black uppercase tracking-widest leading-relaxed max-w-[160px]">{item.label}</p>
+                 <p className="text-white text-xs font-black uppercase tracking-widest leading-relaxed max-w-[160px] mx-auto">{item.label}</p>
               </div>
             ))}
          </div>
@@ -333,7 +355,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
         <div className="max-w-7xl mx-auto px-6 space-y-20">
           <div className="text-center space-y-6">
             <p className="text-[10px] font-black text-[#3b32cc] uppercase tracking-[0.3em]">Nossos Parceiros</p>
-            <h2 className="text-5xl font-black text-slate-800 tracking-tight">O que dizem sobre o SAO</h2>
+            <h2 className="text-5xl font-black text-slate-800 tracking-tight text-center">O que dizem sobre o SAO</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -358,17 +380,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
       <SectionWrapper id="contato" className="py-32 px-6 md:px-12 lg:px-24 bg-slate-50/30">
          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-20">
             <div className="lg:col-span-5 space-y-12">
-               <div className="space-y-6">
-                 <h2 className="text-5xl font-black text-[#3b32cc] tracking-tight">Vamos construir <br/>o futuro juntos?</h2>
-                 <p className="text-slate-500 text-lg font-medium leading-relaxed">Nossa equipe comercial está pronta para oferecer uma demonstração personalizada para sua ONG.</p>
+               <div className="space-y-6 text-center lg:text-left">
+                 <h2 className="text-5xl font-black text-[#3b32cc] tracking-tight">Vamos construir <br className="hidden lg:block"/>o futuro juntos?</h2>
+                 <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-md mx-auto lg:mx-0">Nossa equipe comercial está pronta para oferecer uma demonstração personalizada para sua ONG.</p>
                </div>
 
                <div className="space-y-6">
-                 <div className="flex items-center gap-6 p-8 bg-white rounded-[32px] shadow-sm border border-slate-100 hover:border-[#ced4ff] transition-all">
+                 <div className="flex flex-col lg:flex-row items-center gap-6 p-8 bg-white rounded-[32px] shadow-sm border border-slate-100 hover:border-[#ced4ff] transition-all text-center lg:text-left">
                     <div className="w-14 h-14 bg-[#ced4ff]/20 rounded-2xl flex items-center justify-center text-[#3b32cc] shadow-inner"><Mail size={24} /></div>
                     <div><p className="text-[10px] font-black text-[#3b32cc] uppercase tracking-widest">E-mail</p><p className="text-lg font-bold text-slate-800">comercial@sao.app</p></div>
                  </div>
-                 <div className="flex items-center gap-6 p-8 bg-white rounded-[32px] shadow-sm border border-slate-100 hover:border-[#ced4ff] transition-all">
+                 <div className="flex flex-col lg:flex-row items-center gap-6 p-8 bg-white rounded-[32px] shadow-sm border border-slate-100 hover:border-[#ced4ff] transition-all text-center lg:text-left">
                     <div className="w-14 h-14 bg-[#ced4ff]/20 rounded-2xl flex items-center justify-center text-[#3b32cc] shadow-inner"><Phone size={24} /></div>
                     <div><p className="text-[10px] font-black text-[#3b32cc] uppercase tracking-widest">Telefone</p><p className="text-lg font-bold text-slate-800">(31) 3459-3030</p></div>
                  </div>
@@ -397,36 +419,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
          </div>
       </SectionWrapper>
 
-      {/* Footer */}
-      <footer className="py-20 border-t border-slate-100 bg-[#F8FAFC] px-6 md:px-12">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="space-y-6 text-center md:text-left">
+      {/* Footer (ATUALIZADO PARA CENTRALIZAR CONFORME IMAGEM) */}
+      <footer className="py-20 border-t border-slate-100 bg-[#F8FAFC] px-6">
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center text-center gap-12">
+          {/* Logo e Copyright */}
+          <div className="space-y-6 flex flex-col items-center">
             <img 
               src="https://8e64ecf99bf75c711a4b8d5b4c2fec92.cdn.bubble.io/f1716321160796x918234636571374700/Logo-Primario.svg" 
               alt="Logo" 
-              className="h-8 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer"
+              className="h-10 w-auto grayscale opacity-40 hover:opacity-100 transition-all cursor-pointer mx-auto"
             />
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] leading-relaxed">
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] leading-relaxed max-w-xs mx-auto">
               © Plataforma SAO 2026<br />Humanizando a gestão social
             </p>
           </div>
           
-          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
-            <div className="space-y-2 text-center md:text-left">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suporte</p>
-               <a href="mailto:ajuda@sao.app" className="text-sm font-black text-[#3b32cc] hover:underline transition-all">ajuda@sao.app</a>
-            </div>
+          {/* Suporte */}
+          <div className="space-y-3 flex flex-col items-center">
+             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Suporte</p>
+             <a href="mailto:ajuda@sao.app" className="text-xl font-black text-[#3b32cc] hover:underline transition-all tracking-tight">ajuda@sao.app</a>
           </div>
 
-          <div className="flex flex-col items-center md:items-end gap-4">
+          {/* Social e Créditos */}
+          <div className="flex flex-col items-center gap-6">
              <div className="flex gap-4">
                 {[Globe, MessageCircle, Star].map((Icon, i) => (
-                  <button key={i} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-[#3b32cc] hover:text-white hover:border-[#3b32cc] transition-all shadow-sm">
-                    <Icon size={18} />
+                  <button key={i} className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-[#3b32cc] hover:text-white hover:border-[#3b32cc] transition-all shadow-sm">
+                    <Icon size={20} />
                   </button>
                 ))}
              </div>
-             <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+             <div className="text-slate-300 text-[10px] font-black uppercase tracking-[0.25em]">
                By Atualz Soluções
              </div>
           </div>
@@ -439,14 +462,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
            <div className="absolute inset-0 bg-[#3b32cc]/60 backdrop-blur-md" onClick={() => setIsCtaModalOpen(false)} />
            <div className="relative bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
               <div className="bg-[#3b32cc] p-10 text-white text-center">
-                 <h3 className="text-3xl font-black tracking-tight">Inicie agora mesmo</h3>
-                 <p className="text-indigo-100 text-sm mt-2 opacity-80 font-medium">Preencha seus dados para testar grátis.</p>
+                 <h3 className="text-3xl font-black tracking-tight text-center">Inicie agora mesmo</h3>
+                 <p className="text-indigo-100 text-sm mt-2 opacity-80 font-medium text-center">Preencha seus dados para testar grátis.</p>
               </div>
               <div className="p-10 space-y-6">
                  <div className="space-y-4">
                     <input type="text" placeholder="Nome da ONG" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium" />
                     <input type="email" placeholder="E-mail profissional" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium" />
-                    <input type="tel" placeholder="WhatsApp" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium" />
+                    <input 
+                      type="tel" 
+                      placeholder="WhatsApp" 
+                      value={phoneValue}
+                      onChange={handlePhoneChange}
+                      className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium" 
+                    />
                  </div>
                  <button className="w-full h-16 bg-[#3b32cc] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#3b32cc]/30 hover:bg-indigo-800 transition-all active:scale-95">
                     Garantir Acesso Grátis

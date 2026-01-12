@@ -20,6 +20,7 @@ import {
   Globe,
   Star,
   X,
+  Menu,
   Mail,
   Phone,
   Send,
@@ -82,6 +83,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [isCtaModalOpen, setIsCtaModalOpen] = useState(false);
   const [resourceModal, setResourceModal] = useState<ModalContent | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const primaryBlue = "#3b32cc"; 
   const secondaryBlue = "#ced4ff"; 
@@ -105,6 +107,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
+  const navLinks = [
+    { label: 'Home', href: '#' },
+    { label: 'Funcionalidades', href: '#funcionalidades' },
+    { label: 'Depoimentos', href: '#depoimentos' },
+    { label: 'Contato', href: '#contato' },
+  ];
+
   return (
     <div className="min-h-screen bg-white font-['Inter'] selection:bg-[#ced4ff] overflow-x-hidden">
       {/* Navbar */}
@@ -117,11 +126,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
           />
         </div>
         
+        {/* Desktop Menu */}
         <div className="hidden lg:flex items-center gap-10">
-          <a href="#" className="text-white text-sm font-bold hover:text-[#ced4ff] transition-colors">Home</a>
-          <a href="#funcionalidades" className="text-white text-sm font-bold hover:text-[#ced4ff] transition-colors">Funcionalidades</a>
-          <a href="#depoimentos" className="text-white text-sm font-bold hover:text-[#ced4ff] transition-colors">Depoimentos</a>
-          <a href="#contato" className="text-white text-sm font-bold hover:text-[#ced4ff] transition-colors">Contato</a>
+          {navLinks.map((link) => (
+            <a key={link.label} href={link.href} className="text-white text-sm font-bold hover:text-[#ced4ff] transition-colors">{link.label}</a>
+          ))}
           <button 
             onClick={onLoginClick}
             className="px-10 py-2.5 bg-white text-[#3b32cc] rounded-lg font-black text-sm hover:scale-105 hover:bg-[#ced4ff] transition-all shadow-md active:scale-95"
@@ -129,7 +138,43 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
             Login
           </button>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="lg:hidden text-white p-2 hover:bg-white/10 rounded-xl transition-colors"
+        >
+          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
       </nav>
+
+      {/* Mobile Menu Drawer Overlay */}
+      <div className={`fixed inset-0 z-[90] bg-[#3b32cc] lg:hidden transition-all duration-500 flex flex-col items-center justify-center p-8 space-y-10 ${
+        isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+      }`}>
+        <div className="flex flex-col items-center space-y-8 w-full">
+          {navLinks.map((link) => (
+            <a 
+              key={link.label} 
+              href={link.href} 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-white text-3xl font-black hover:text-[#ced4ff] transition-colors tracking-tight"
+            >
+              {link.label}
+            </a>
+          ))}
+          <button 
+            onClick={() => { setIsMobileMenuOpen(false); onLoginClick(); }}
+            className="w-full max-w-xs py-5 bg-white text-[#3b32cc] rounded-2xl font-black text-xl shadow-2xl active:scale-95 transition-transform"
+          >
+            Fazer Login
+          </button>
+        </div>
+        
+        <div className="absolute bottom-12 text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">
+          © Plataforma SAO 2026
+        </div>
+      </div>
 
       {/* Hero Section */}
       <SectionWrapper className="pt-48 pb-20 px-6 md:px-12 lg:px-24 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -183,7 +228,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center max-w-6xl mx-auto">
             {/* Coluna Esquerda */}
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-6 order-2 lg:order-1">
                <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center group hover:bg-white hover:shadow-xl transition-all">
                   <Users size={48} className="text-[#3b32cc] mb-4" />
                   <p className="text-2xl font-black text-slate-800">Até 20%</p>
@@ -202,7 +247,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
             </div>
 
             {/* Tablet Central */}
-            <div className="lg:col-span-6 px-4">
+            <div className="lg:col-span-6 px-4 order-1 lg:order-2">
                <div className="w-full aspect-[3/4] bg-slate-900 rounded-[50px] p-4 border-[10px] border-slate-800 shadow-2xl overflow-hidden max-w-sm mx-auto flex items-center justify-center">
                   <div className="w-full h-full bg-white rounded-[35px] overflow-hidden">
                      <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" alt="Interface Tablet" />
@@ -211,7 +256,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
             </div>
 
             {/* Coluna Direita */}
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-6 order-3">
                <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center group hover:bg-white hover:shadow-xl transition-all">
                   <LineChart size={48} className="text-[#3b32cc] mb-4" />
                   <p className="text-2xl font-black text-slate-800">Até 80%</p>

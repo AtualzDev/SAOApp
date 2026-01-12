@@ -30,7 +30,11 @@ import RoutePage from './components/RoutePage';
 import ReportsPage from './components/ReportsPage';
 import ManagementDashboard from './components/ManagementDashboard';
 import SupportPage from './components/SupportPage';
-import FinancePage from './components/FinancePage'; // Nova importação
+import FinancePage from './components/FinancePage';
+import ManagementFinancePage from './components/ManagementFinancePage';
+import ManagementSubscriptionsPage from './components/ManagementSubscriptionsPage';
+import ManagementOngsPage from './components/ManagementOngsPage'; // Nova importação
+import ManagementLeadsPage from './components/ManagementLeadsPage'; // Nova importação
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map, Users } from 'lucide-react';
 
@@ -85,6 +89,26 @@ const App: React.FC = () => {
 
     if (activeTab === 'financeiro') {
       return <FinancePage />;
+    }
+
+    // Lógica para o Financeiro Global (Gestor)
+    if (activeTab === 'gestor-financeiro') {
+      return <ManagementFinancePage />;
+    }
+
+    // Lógica para Assinaturas e Planos (Gestor)
+    if (activeTab === 'gestor-assinaturas') {
+      return <ManagementSubscriptionsPage />;
+    }
+
+    // Lógica para Ongs Ativas (Gestor)
+    if (activeTab === 'gestor-ongs') {
+      return <ManagementOngsPage />;
+    }
+
+    // Lógica para Leads (Gestor)
+    if (activeTab === 'gestor-leads') {
+      return <ManagementLeadsPage />;
     }
 
     if (activeTab === 'inicio' || activeTab === 'gestor-painel' || activeTab === 'gestor') {

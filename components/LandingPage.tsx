@@ -24,7 +24,12 @@ import {
   Phone,
   MapPin,
   Send,
-  Quote
+  Quote,
+  PieChart,
+  Landmark,
+  BriefcaseMedical,
+  LineChart,
+  DollarSign
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -45,8 +50,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
-  const primaryBlue = "#3b32cc"; // Azul do bloco da imagem
-  const secondaryBlue = "#ced4ff"; // Azul claro do bloco da imagem
+  const primaryBlue = "#3b32cc"; 
+  const secondaryBlue = "#ced4ff"; 
 
   const resources = [
     { title: "Ficha Social Online", desc: "Digitalize todo o histórico do assistido. Tenha em mãos dados de saúde, moradia e necessidades básicas com um clique, garantindo agilidade no atendimento social." },
@@ -124,6 +129,68 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl cursor-pointer relative z-10">
                 <Play size={32} className="text-[#3b32cc] fill-[#3b32cc] ml-1" />
              </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Seção Parceiro Ideal (ATUALIZADA IGUAL À IMAGEM) */}
+      <section className="py-32 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-16 relative z-10">
+          <div className="space-y-4">
+            <p className="text-[10px] font-black text-[#3b32cc] uppercase tracking-[0.3em]">Gerenciamento Inteligente</p>
+            <h2 className="text-4xl md:text-5xl font-black text-[#000040] tracking-tight">O SAO é seu parceiro de gestão ideal</h2>
+            <p className="text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
+              O sistema vai além da gestão tradicional, oferecendo uma solução completa e inovadora que impacta diretamente na produtividade dos colaboradores da organização.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Coluna Esquerda */}
+            <div className="lg:col-span-3 space-y-6">
+               <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center">
+                  <Users size={32} className="text-[#3b32cc] mb-4" />
+                  <p className="text-2xl font-black text-slate-800">Até 20%</p>
+                  <p className="text-[11px] text-slate-400 font-bold mt-2">Estabilidade e engajamento dos colaboradores.</p>
+               </div>
+               <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center">
+                  <PieChart size={32} className="text-[#3b32cc] mb-4" />
+                  <p className="text-2xl font-black text-slate-800">Até 90%</p>
+                  <p className="text-[11px] text-slate-400 font-bold mt-2">Redução no índice de ausências.</p>
+               </div>
+               <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center">
+                  <DollarSign size={32} className="text-[#3b32cc] mb-4" />
+                  <p className="text-2xl font-black text-slate-800">Até 70%</p>
+                  <p className="text-[11px] text-slate-400 font-bold mt-2">Economia na gestão e controle dos processos internos.</p>
+               </div>
+            </div>
+
+            {/* Tablet Central */}
+            <div className="lg:col-span-6 px-4">
+               <div className="w-full aspect-[3/4] bg-slate-900 rounded-[50px] p-4 border-[10px] border-slate-800 shadow-2xl overflow-hidden max-w-sm mx-auto">
+                  <div className="w-full h-full bg-white rounded-[35px] overflow-hidden">
+                     <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" alt="" />
+                  </div>
+               </div>
+            </div>
+
+            {/* Coluna Direita */}
+            <div className="lg:col-span-3 space-y-6">
+               <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center">
+                  <LineChart size={32} className="text-[#3b32cc] mb-4" />
+                  <p className="text-2xl font-black text-slate-800">Até 80%</p>
+                  <p className="text-[11px] text-slate-400 font-bold mt-2">Amplie o acompanhamento dos assistidos.</p>
+               </div>
+               <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center">
+                  <Landmark size={32} className="text-[#3b32cc] mb-4" />
+                  <p className="text-2xl font-black text-slate-800">20-30%</p>
+                  <p className="text-[11px] text-slate-400 font-bold mt-2">Amplie a captação de doações.</p>
+               </div>
+               <div className="bg-[#F8FAFC] p-8 rounded-3xl border border-slate-50 shadow-sm flex flex-col items-center text-center">
+                  <BriefcaseMedical size={32} className="text-[#3b32cc] mb-4" />
+                  <p className="text-2xl font-black text-slate-800">Até 50%</p>
+                  <p className="text-[11px] text-slate-400 font-bold mt-2">Amplie o gerenciamento social e clínico.</p>
+               </div>
+            </div>
           </div>
         </div>
       </section>
@@ -211,58 +278,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
           >
             Saiba mais
           </button>
-        </div>
-      </section>
-
-      {/* Seção Parceiro Ideal (ESTÁTICA) */}
-      <section className="py-40 bg-slate-50/50 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#ced4ff]/20 rounded-full blur-3xl -mr-48 -mt-48" />
-        <div className="max-w-7xl mx-auto px-6 text-center space-y-16 relative z-10">
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-[#3b32cc] uppercase tracking-[0.3em]">Gerenciamento Inteligente</p>
-            <h2 className="text-5xl font-black text-slate-800 tracking-tight">O SAO é seu parceiro de gestão ideal</h2>
-            <p className="text-slate-400 max-w-3xl mx-auto font-medium">Impactamos diretamente na produtividade dos colaboradores da organização.</p>
-          </div>
-
-          <div className="relative max-w-5xl mx-auto py-10">
-            <div className="relative z-10 w-full max-w-2xl mx-auto aspect-[3/4] bg-slate-900 rounded-[60px] p-6 border-[12px] border-slate-800 shadow-2xl overflow-hidden">
-               <div className="w-full h-full bg-white rounded-[40px] flex items-center justify-center overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" alt="" />
-               </div>
-            </div>
-
-            {/* KPI Cards FIXOS */}
-            <div className="absolute top-10 left-0 lg:-left-20 w-56 p-6 bg-white rounded-3xl shadow-xl border border-slate-100 text-left">
-               <Users size={24} className="text-[#3b32cc] mb-3" />
-               <p className="text-xl font-black text-slate-800">Até 20%</p>
-               <p className="text-[11px] text-slate-400 font-bold uppercase mt-1">Estabilidade e engajamento.</p>
-            </div>
-            <div className="absolute top-1/2 left-0 lg:-left-28 -translate-y-1/2 w-56 p-6 bg-white rounded-3xl shadow-xl border border-slate-100 text-left">
-               <Activity size={24} className="text-[#3b32cc] mb-3" />
-               <p className="text-xl font-black text-slate-800">Até 90%</p>
-               <p className="text-[11px] text-slate-400 font-bold uppercase mt-1">Redução de ausências.</p>
-            </div>
-            <div className="absolute bottom-10 left-0 lg:-left-20 w-56 p-6 bg-white rounded-3xl shadow-xl border border-slate-100 text-left">
-               <Wallet size={24} className="text-[#3b32cc] mb-3" />
-               <p className="text-xl font-black text-slate-800">Até 70%</p>
-               <p className="text-[11px] text-slate-400 font-bold uppercase mt-1">Economia operacional.</p>
-            </div>
-            <div className="absolute top-10 right-0 lg:-right-20 w-56 p-6 bg-white rounded-3xl shadow-xl border border-slate-100 text-left">
-               <TrendingUp size={24} className="text-[#3b32cc] mb-3" />
-               <p className="text-xl font-black text-slate-800">Até 80%</p>
-               <p className="text-[11px] text-slate-400 font-bold uppercase mt-1">Acompanhamento assistidos.</p>
-            </div>
-            <div className="absolute top-1/2 right-0 lg:-right-28 -translate-y-1/2 w-56 p-6 bg-white rounded-3xl shadow-xl border border-slate-100 text-left">
-               <LayoutGrid size={24} className="text-[#3b32cc] mb-3" />
-               <p className="text-xl font-black text-slate-800">20-30%</p>
-               <p className="text-[11px] text-slate-400 font-bold uppercase mt-1">Captação de doações.</p>
-            </div>
-            <div className="absolute bottom-10 right-0 lg:-right-20 w-56 p-6 bg-white rounded-3xl shadow-xl border border-slate-100 text-left">
-               <Stethoscope size={24} className="text-[#3b32cc] mb-3" />
-               <p className="text-xl font-black text-slate-800">Até 50%</p>
-               <p className="text-[11px] text-slate-400 font-bold uppercase mt-1">Gestão clínica ampliada.</p>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -380,7 +395,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Mensagem</label>
-                    <textarea rows={4} placeholder="Conte-nos um pouco sobre sua instituição..." className="w-full p-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium resize-none" />
+                    <textarea rows={4} placeholder="Conte-nos um pouco sobre sua institution..." className="w-full p-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium resize-none" />
                   </div>
                   <button className="md:col-span-2 w-full h-16 bg-[#3b32cc] text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-[#3b32cc]/30 hover:bg-indigo-800 transition-all active:scale-95">
                     Enviar Mensagem <Send size={20} />

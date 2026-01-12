@@ -29,7 +29,9 @@ import {
   Landmark,
   BriefcaseMedical,
   LineChart,
-  DollarSign
+  DollarSign,
+  FileText,
+  Handshake
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -39,6 +41,7 @@ interface LandingPageProps {
 interface ModalContent {
   title: string;
   desc: string;
+  icon: React.ReactNode;
 }
 
 // Hook para animação de entrada ao rolar (estilo paralax de revelação)
@@ -86,16 +89,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [phoneValue, setPhoneValue] = useState('');
 
-  const primaryBlue = "#3b32cc"; 
-  const secondaryBlue = "#ced4ff"; 
-
   const resources = [
-    { title: "Ficha Social Online", desc: "Digitalize todo o histórico do assistido. Tenha em mãos dados de saúde, moradia e necessidades básicas com um clique, garantindo agilidade no atendimento social através de um prontuário completo e seguro." },
-    { title: "Agenda interativa", desc: "Organize oficinas, consultas e atendimentos por setor. O sistema evita conflitos de horários e permite que toda a equipe visualize a disponibilidade em tempo real em uma interface intuitiva." },
-    { title: "Organize suas parcerias", desc: "Centralize o contato com hospitais, clínicas e doadores corporativos. Gerencie convênios e acompanhe a execução de parcerias com total transparência e relatórios detalhados." },
-    { title: "Reabilitação e prevenção", desc: "Módulo especializado para acompanhamento clínico. Registre evoluções, terapias e planos de reabilitação, garantindo que o assistido receba o cuidado multidisciplinar necessário." },
-    { title: "Lembrete de Whatsapp", desc: "Reduza faltas em até 40% com o envio automático de lembretes. O sistema notifica o assistido sobre consultas e retiradas de benefícios diretamente no celular de forma automática." },
-    { title: "Doações", desc: "Controle absoluto sobre o que entra e sai. Gerencie o bazar e a despensa, gere recibos de doação e mantenha a prestação de contas sempre atualizada para seus doadores." },
+    { 
+      title: "Ficha Social Online", 
+      desc: "Digitalize todo o histórico do assistido. Tenha em mãos dados de saúde, moradia e necessidades básicas com um clique, garantindo agilidade no atendimento social através de um prontuário completo e seguro.",
+      icon: <FileText size={48} />
+    },
+    { 
+      title: "Agenda interativa", 
+      desc: "Organize oficinas, consultas e atendimentos por setor. O sistema evita conflitos de horários e permite que toda a equipe visualize a disponibilidade em tempo real em uma interface intuitiva.",
+      icon: <Calendar size={48} />
+    },
+    { 
+      title: "Organize suas parcerias", 
+      desc: "Centralize o contato com hospitais, clínicas e doadores corporativos. Gerencie convênios e acompanhe a execução de parcerias com total transparência e relatórios detalhados.",
+      icon: <Handshake size={48} />
+    },
+    { 
+      title: "Reabilitação e prevenção", 
+      desc: "Módulo especializado para acompanhamento clínico. Registre evoluções, terapias e planos de reabilitação, garantindo que o assistido receba o cuidado multidisciplinar necessário.",
+      icon: <Stethoscope size={48} />
+    },
+    { 
+      title: "Lembrete de Whatsapp", 
+      desc: "Reduza faltas em até 40% com o envio automático de lembretes. O sistema notifica o assistido sobre consultas e retiradas de benefícios diretamente no celular de forma automática.",
+      icon: <MessageCircle size={48} />
+    },
+    { 
+      title: "Doações", 
+      desc: "Controle absoluto sobre o que entra e sai. Gerencie o bazar e a despensa, gere recibos de doação e mantenha a prestação de contas sempre atualizada para seus doadores.",
+      icon: <Package size={48} />
+    },
   ];
 
   const testimonials = [
@@ -103,10 +127,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
     { name: "Marcos Braz", role: "Presidente - Amigos do Bem", text: "A gestão do estoque era nosso maior gargalo. Hoje temos precisão absoluta de cada quilo de alimento doado e conseguimos prestar contas em segundos.", avatar: "https://i.pravatar.cc/150?u=marcos" },
     { name: "Carla Silva", role: "Coord. Administrativa", text: "A facilidade de gerar relatórios para nossos doadores aumentou nossa transparência e, consequentemente, o engajamento de novos parceiros.", avatar: "https://i.pravatar.cc/150?u=carla" },
   ];
-
-  const toggleFaq = (index: number) => {
-    setActiveFaq(activeFaq === index ? null : index);
-  };
 
   const navLinks = [
     { label: 'Home', href: '#' },
@@ -237,7 +257,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
         </div>
       </SectionWrapper>
 
-      {/* Seção Parceiro Ideal (RÉPLICA DA IMAGEM) */}
+      {/* Seção Parceiro Ideal */}
       <SectionWrapper className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6 text-center space-y-16">
           <div className="space-y-4">
@@ -317,7 +337,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
               >
                  <div className="aspect-[16/10] bg-[#ced4ff]/10 flex items-center justify-center p-8 overflow-hidden">
                     <div className="w-full h-full bg-white rounded-3xl shadow-sm border border-slate-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                       <LayoutGrid size={48} className="text-[#ced4ff] group-hover:text-[#3b32cc] transition-colors" />
+                       <div className="text-[#ced4ff] group-hover:text-[#3b32cc] transition-colors">
+                        {item.icon}
+                       </div>
                     </div>
                  </div>
                  <div className="p-10 space-y-4">
@@ -419,7 +441,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
          </div>
       </SectionWrapper>
 
-      {/* Footer (ATUALIZADO PARA CENTRALIZAR CONFORME IMAGEM) */}
+      {/* Footer */}
       <footer className="py-20 border-t border-slate-100 bg-[#F8FAFC] px-6">
         <div className="max-w-7xl mx-auto flex flex-col items-center justify-center text-center gap-12">
           {/* Logo e Copyright */}
@@ -474,7 +496,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
                       placeholder="WhatsApp" 
                       value={phoneValue}
                       onChange={handlePhoneChange}
-                      className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium" 
+                      className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:ring-4 focus:ring-[#ced4ff]/30 transition-all font-medium" 
                     />
                  </div>
                  <button className="w-full h-16 bg-[#3b32cc] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-[#3b32cc]/30 hover:bg-indigo-800 transition-all active:scale-95">
@@ -492,7 +514,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLoginClick }) => {
            <div className="relative bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="p-10 border-b border-slate-50 flex items-center justify-between">
                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-[#ced4ff]/30 text-[#3b32cc] rounded-2xl"><LayoutGrid size={24} /></div>
+                    <div className="p-3 bg-[#ced4ff]/30 text-[#3b32cc] rounded-2xl">
+                      {resourceModal.icon}
+                    </div>
                     <h3 className="text-2xl font-black text-slate-800 tracking-tight">{resourceModal.title}</h3>
                  </div>
                  <button onClick={() => setResourceModal(null)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 rounded-2xl transition-all"><X size={24} /></button>

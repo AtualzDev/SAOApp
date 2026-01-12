@@ -33,14 +33,15 @@ import SupportPage from './components/SupportPage';
 import FinancePage from './components/FinancePage';
 import ManagementFinancePage from './components/ManagementFinancePage';
 import ManagementSubscriptionsPage from './components/ManagementSubscriptionsPage';
-import ManagementOngsPage from './components/ManagementOngsPage'; // Nova importação
-import ManagementLeadsPage from './components/ManagementLeadsPage'; // Nova importação
+import ManagementOngsPage from './components/ManagementOngsPage';
+import ManagementLeadsPage from './components/ManagementLeadsPage';
+import LandingPage from './components/LandingPage'; // Nova importação
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map, Users } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password' | 'privacy-policy' | 'terms-of-use'>('login');
+  const [authView, setAuthView] = useState<'landing' | 'login' | 'forgot-password' | 'reset-password' | 'privacy-policy' | 'terms-of-use'>('landing');
   const [activeTab, setActiveTab] = useState('inicio');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -56,6 +57,9 @@ const App: React.FC = () => {
   }, [activeTab]);
 
   if (!isLoggedIn) {
+    if (authView === 'landing') {
+      return <LandingPage onLoginClick={() => setAuthView('login')} />;
+    }
     if (authView === 'forgot-password') {
       return <ForgotPasswordPage onBackToLogin={() => setAuthView('login')} />;
     }
@@ -306,7 +310,6 @@ const App: React.FC = () => {
       return;
     }
 
-    // Lógica para desmarcar o modo Gestor
     if (id === 'gestor' && isManagementMode) {
       setActiveTab('inicio');
       setIsManagementMode(false);

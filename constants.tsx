@@ -44,7 +44,6 @@ export const MOCK_LAUNCHES: Launch[] = [
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'inicio', label: 'Início', icon: <LayoutDashboard size={20} />, path: '/' },
-  { id: 'assistidos', label: 'Assistidos', icon: <Users size={20} />, path: '/assistidos' },
   { id: 'agenda', label: 'Agenda', icon: <Calendar size={20} />, path: '/agenda' },
   { id: 'rotas', label: 'Rotas de Atendimento', icon: <MapPin size={20} />, path: '/rotas' },
   { id: 'financeiro', label: 'Financeiro', icon: <Wallet size={20} />, path: '/financeiro' },
@@ -71,6 +70,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     path: '/assistencia',
     children: [
       { id: 'soc-visao-geral', label: 'Visão Geral', icon: <LayoutDashboard size={18} />, path: '/assistencia/visao-geral' },
+      { id: 'assistidos', label: 'Assistidos', icon: <Users size={18} />, path: '/assistidos' },
       { id: 'soc-historico', label: 'Histórico', icon: <History size={18} />, path: '/assistencia/historico' },
       { id: 'soc-solicitacoes', label: 'Solicitacoes', icon: <ClipboardList size={18} />, path: '/assistencia/solicitacoes' },
       { id: 'soc-acompanhamento', label: 'Acompanhamento', icon: <Activity size={18} />, path: '/assistencia/acompanhamento' },

@@ -29,6 +29,12 @@ import RoutePage from './components/RoutePage';
 import ReportsPage from './components/ReportsPage';
 import ManagementDashboard from './components/ManagementDashboard';
 import SupportPage from './components/SupportPage';
+import FinancePage from './components/FinancePage';
+import ManagementFinancePage from './components/ManagementFinancePage';
+import ManagementSubscriptionsPage from './components/ManagementSubscriptionsPage';
+import ManagementOngsPage from './components/ManagementOngsPage';
+import ManagementLeadsPage from './components/ManagementLeadsPage';
+import LandingPage from './components/LandingPage';
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map } from 'lucide-react';
 import { supabase } from './services/supabase';
@@ -36,7 +42,7 @@ import { supabase } from './services/supabase';
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [authView, setAuthView] = useState<'login' | 'forgot-password' | 'reset-password' | 'privacy-policy' | 'terms-of-use'>('login');
+  const [authView, setAuthView] = useState<'landing' | 'login' | 'forgot-password' | 'reset-password' | 'privacy-policy' | 'terms-of-use'>('landing');
   const [activeTab, setActiveTab] = useState('inicio');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -55,20 +61,17 @@ const App: React.FC = () => {
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
+      // Hash check for password reset (Supabase sends #access_token=...)
+      const hash = window.location.hash;
+      // Query param check (if we manually redirected with ?reset=true)
+      const urlParams = new URLSearchParams(window.location.search);
+
+      if ((hash && hash.includes('type=recovery')) || urlParams.get('reset') === 'true') {
+        setAuthView('reset-password');
+      }
+
       setIsCheckingAuth(false);
     });
-
-    // Hash check for password reset (Supabase sends #access_token=...)
-    const hash = window.location.hash;
-    if (hash && hash.includes('type=recovery')) {
-      setAuthView('reset-password');
-    }
-
-    // Query param check (if we manually redirected with ?reset=true)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('reset') === 'true') {
-      setAuthView('reset-password');
-    }
 
     const {
       data: { subscription },
@@ -79,11 +82,10 @@ const App: React.FC = () => {
         window.location.search.includes('reset=true');
 
       if (session && !isRecovery && _event !== 'PASSWORD_RECOVERY') {
-        setAuthView('login');
+        // Logged in normally
       } else if (isRecovery || _event === 'PASSWORD_RECOVERY') {
         setAuthView('reset-password');
       }
-      setIsCheckingAuth(false);
     });
 
     return () => subscription.unsubscribe();
@@ -140,6 +142,9 @@ const App: React.FC = () => {
   }
 
   if (!isLoggedIn) {
+    if (authView === 'landing') {
+      return <LandingPage onLoginClick={() => setAuthView('login')} />;
+    }
     return (
       <div className="h-screen w-full animate-in fade-in duration-700">
         {authView === 'reset-password' && <ResetPasswordPage onBackToLogin={() => setAuthView('login')} />}
@@ -156,6 +161,30 @@ const App: React.FC = () => {
 
     if (activeTab === 'suporte' || activeTab === 'gestor-suporte') {
       return <SupportPage />;
+    }
+
+    if (activeTab === 'financeiro') {
+      return <FinancePage />;
+    }
+
+    // Lógica para o Financeiro Global (Gestor)
+    if (activeTab === 'gestor-financeiro') {
+      return <ManagementFinancePage />;
+    }
+
+    // Lógica para Assinaturas e Planos (Gestor)
+    if (activeTab === 'gestor-assinaturas') {
+      return <ManagementSubscriptionsPage />;
+    }
+
+    // Lógica para Ongs Ativas (Gestor)
+    if (activeTab === 'gestor-ongs') {
+      return <ManagementOngsPage />;
+    }
+
+    // Lógica para Leads (Gestor)
+    if (activeTab === 'gestor-leads') {
+      return <ManagementLeadsPage />;
     }
 
     if (activeTab === 'inicio' || activeTab === 'gestor-painel' || activeTab === 'gestor') {
@@ -369,7 +398,6 @@ const App: React.FC = () => {
       return;
     }
 
-    // Lógica para desmarcar o modo Gestor
     if (id === 'gestor' && isManagementMode) {
       setActiveTab('inicio');
       setIsManagementMode(false);

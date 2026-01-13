@@ -20,7 +20,8 @@ import {
   ClipboardList,
   History,
   Activity,
-  LifeBuoy
+  LifeBuoy,
+  Wallet
 } from 'lucide-react';
 import { Launch, SidebarItem } from './types';
 
@@ -46,6 +47,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'assistidos', label: 'Assistidos', icon: <Users size={20} />, path: '/assistidos' },
   { id: 'agenda', label: 'Agenda', icon: <Calendar size={20} />, path: '/agenda' },
   { id: 'rotas', label: 'Rotas de Atendimento', icon: <MapPin size={20} />, path: '/rotas' },
+  { id: 'financeiro', label: 'Financeiro', icon: <Wallet size={20} />, path: '/financeiro' },
   { id: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={20} />, path: '/relatorios' },
   { 
     id: 'estoque', 

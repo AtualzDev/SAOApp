@@ -21,7 +21,13 @@ import {
   X,
   PlayCircle,
   UserPlus,
-  ChevronRight
+  ChevronRight,
+  MoreVertical,
+  CalendarDays,
+  Activity,
+  ArrowUpRight,
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 import SocialRequestModal from './SocialRequestModal';
 import SocialRequestDetailsModal from './SocialRequestDetailsModal';
@@ -47,6 +53,28 @@ interface Beneficiary {
   contato: string;
 }
 
+interface HistoryEvent {
+  id: string;
+  type: 'visit' | 'donation' | 'medical' | 'hospital' | 'note';
+  title: string;
+  description: string;
+  user: string;
+  date: string;
+  time: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+interface AcompanhamentoData {
+  id: string;
+  beneficiario: string;
+  patologia: string;
+  prioridade: 'Alta' | 'Média' | 'Baixa';
+  ultimaInteracao: string;
+  proximaAcao: string;
+  statusEvolucao: string;
+}
+
 interface SocialAssistanceModuleProps {
   initialTab?: SubTab;
   onTabChange?: (tab: SubTab) => void;
@@ -54,7 +82,6 @@ interface SocialAssistanceModuleProps {
 
 const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initialTab = 'visao-geral', onTabChange }) => {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialTab);
-  const [historySearch, setHistorySearch] = useState('');
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -68,7 +95,6 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
 
-  // Sincroniza o estado interno se a prop initialTab mudar via sidebar
   useEffect(() => {
     setActiveSubTab(initialTab);
   }, [initialTab]);
@@ -84,6 +110,20 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
     { id: '3', nome: 'Carlos Mendes', status: 'Assistido', cpf: '987.654.321-11', contato: '(31) 9 7766.5544' },
   ];
 
+  const historyEvents: HistoryEvent[] = [
+    { id: 'h1', type: 'visit', title: 'Visita Domiciliar', description: 'Realizada triagem socioeconômica. Família em situação de vulnerabilidade extrema.', user: 'Beatriz Lima (A.S.)', date: '06/01/2026', time: '14:20', icon: <User size={16} />, color: 'bg-blue-500' },
+    { id: 'h2', type: 'donation', title: 'Entrega de Cesta Básica', description: 'Benefício mensal entregue conforme cronograma do setor B.', user: 'Estoque Central', date: '05/01/2026', time: '10:00', icon: <ShoppingBag size={16} />, color: 'bg-emerald-500' },
+    { id: 'h3', type: 'medical', title: 'Atualização de Laudo', description: 'Novo laudo médico anexado: CID-10 C71. Necessidade de suplementação.', user: 'Dr. Ricardo', date: '04/01/2026', time: '16:45', icon: <Stethoscope size={16} />, color: 'bg-rose-500' },
+    { id: 'h4', type: 'hospital', title: 'Internação Hospitalar', description: 'Assistido encaminhado para Hospital Mário Penna para ciclo de quimioterapia.', user: 'Beatriz Lima (A.S.)', date: '02/01/2026', time: '08:30', icon: <Hospital size={16} />, color: 'bg-indigo-500' },
+  ];
+
+  const acompanhamentos: AcompanhamentoData[] = [
+    { id: 'a1', beneficiario: 'Maria Auxiliadora', patologia: 'Neoplasia Maligna', prioridade: 'Alta', ultimaInteracao: '06/01/26', proximaAcao: '15/01/26', statusEvolucao: 'Em tratamento' },
+    { id: 'a2', beneficiario: 'João Silva Oliveira', patologia: 'Cardiopatia Grave', prioridade: 'Média', ultimaInteracao: '05/01/26', proximaAcao: '20/01/26', statusEvolucao: 'Estável' },
+    { id: 'a3', beneficiario: 'Francisca das Chagas', patologia: 'Diabetes Tipo 2', prioridade: 'Baixa', ultimaInteracao: '04/01/26', proximaAcao: '04/02/26', statusEvolucao: 'Acompanhamento' },
+    { id: 'a4', beneficiario: 'Antônio José Santos', patologia: 'DPOC', prioridade: 'Alta', ultimaInteracao: '06/01/26', proximaAcao: '08/01/26', statusEvolucao: 'Crítico' },
+  ];
+
   const filteredBeneficiaries = mockBeneficiaries.filter(b => 
     b.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
     b.cpf.includes(searchTerm)
@@ -95,56 +135,15 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
     { id: '3', date: '04/01/2026', user: 'Ana Paula (A.S.)', beneficiary: 'Carlos Mendes', items: '5x Fralda G, 2x Leite Especial', status: 'Em Separação' },
   ]);
 
-  useEffect(() => {
-    if (cancelFeedback) {
-      const timer = setTimeout(() => setCancelFeedback(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [cancelFeedback]);
-
   const handleSelectBeneficiary = (b: Beneficiary) => {
     setSelectedBeneficiary(b);
     setSearchTerm(b.nome);
     setShowSearchResults(false);
   };
 
-  const handleStartService = () => {
-    setIsServiceHubOpen(true);
-  };
-
-  const handleCreateRequest = () => {
-    setRequestModalMode('create');
-    setIsServiceHubOpen(false);
-    setIsRequestModalOpen(true);
-  };
-
-  const handleEditRequest = () => {
-    setRequestModalMode('edit');
-    setIsDetailsModalOpen(false);
-    setIsRequestModalOpen(true);
-  };
-
-  const handleCancelRequest = () => {
-    setIsDetailsModalOpen(false);
-    setIsCancelModalOpen(true);
-  };
-
-  const handleConfirmCancel = (reason: string) => {
-    if (selectedRequest) {
-      setRequests(prev => prev.map(r => r.id === selectedRequest.id ? { ...r, status: 'Cancelado' } : r));
-      setCancelFeedback(`A solicitação #${selectedRequest.id.padStart(4, '0')} de ${selectedRequest.beneficiary} foi cancelada com sucesso.`);
-    }
-    setIsCancelModalOpen(false);
-  };
-
-  const handleSaveRequest = (data: any) => {
-    setIsRequestModalOpen(false);
-  };
-
-  const handleViewDetails = (req: Request) => {
-    setSelectedRequest(req);
-    setIsDetailsModalOpen(true);
-  };
+  const handleStartService = () => setIsServiceHubOpen(true);
+  const handleCreateRequest = () => { setRequestModalMode('create'); setIsServiceHubOpen(false); setIsRequestModalOpen(true); };
+  const handleViewDetails = (req: Request) => { setSelectedRequest(req); setIsDetailsModalOpen(true); };
 
   const renderOverview = () => (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -183,14 +182,10 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
             <button onClick={() => handleTabChange('historico')} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline group">Ver histórico completo <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" /></button>
           </div>
           <div className="space-y-8 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
-            {[
-              { type: 'donation', user: 'Maria das Graças', desc: 'Recebeu Cesta Básica e Kit Higiene', time: '10:30', icon: <ShoppingBag size={14} />, color: 'bg-emerald-500' },
-              { type: 'hospital', user: 'João Silva', desc: 'Internado no Hospital Santa Casa (Quarto 402)', time: '09:15', icon: <Hospital size={14} />, color: 'bg-blue-500' },
-              { type: 'visit', user: 'Francisca Lima', desc: 'Visita domiciliar realizada pela Assistente Social', time: 'Ontem', icon: <User size={14} />, color: 'bg-indigo-500' },
-            ].map((item, i) => (
+            {historyEvents.slice(0, 3).map((item, i) => (
               <div key={i} className="relative pl-12">
                 <div className={`absolute left-0 top-1 w-10 h-10 rounded-full ${item.color} text-white flex items-center justify-center border-4 border-white shadow-sm z-10`}>{item.icon}</div>
-                <div><div className="flex items-center justify-between"><h4 className="text-sm font-bold text-slate-700">{item.user}</h4><span className="text-[10px] font-bold text-slate-400 uppercase">{item.time}</span></div><p className="text-xs text-slate-500 mt-1 font-medium">{item.desc}</p></div>
+                <div><div className="flex items-center justify-between"><h4 className="text-sm font-bold text-slate-700">{item.title}</h4><span className="text-[10px] font-bold text-slate-400 uppercase">{item.time}</span></div><p className="text-xs text-slate-500 mt-1 font-medium">{item.description}</p></div>
               </div>
             ))}
           </div>
@@ -255,20 +250,148 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
     </div>
   );
 
+  const renderHistory = () => (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Histórico Social Global</h2>
+          <p className="text-sm text-slate-400 font-medium">Registro cronológico de todas as intervenções sociais.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+            <input type="text" placeholder="Filtrar eventos..." className="w-full md:w-64 h-11 pl-10 pr-4 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none focus:bg-white focus:border-blue-400 transition-all" />
+          </div>
+          <button className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 hover:bg-white transition-all"><CalendarDays size={18} /></button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 md:p-12 relative overflow-hidden">
+        <div className="absolute left-[59px] md:left-[75px] top-12 bottom-12 w-0.5 bg-slate-100" />
+        <div className="space-y-12">
+          {historyEvents.map((event) => (
+            <div key={event.id} className="relative flex gap-8 items-start group">
+              <div className="w-16 md:w-20 text-right flex-shrink-0 pt-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{event.date.split('/')[0]} JAN</p>
+                <p className="text-xs font-bold text-slate-300">{event.time}</p>
+              </div>
+              <div className={`relative z-10 w-10 h-10 md:w-12 md:h-12 rounded-full ${event.color} text-white flex items-center justify-center border-4 border-white shadow-md group-hover:scale-110 transition-transform`}>
+                {event.icon}
+              </div>
+              <div className="flex-1 bg-slate-50/50 rounded-3xl p-6 border border-slate-50 hover:bg-white hover:border-blue-100 transition-all shadow-sm group-hover:shadow-md">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+                  <h4 className="text-sm font-black text-slate-800 tracking-tight">{event.title}</h4>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><User size={12} /> {event.user}</span>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">{event.description}</p>
+                <div className="mt-4 flex justify-end">
+                   <button className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1 hover:underline">Ver Prontuário <ChevronRight size={12} /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAcompanhamento = () => (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Em Acompanhamento', value: '81', icon: <Activity size={20} />, color: 'bg-blue-50 text-blue-600' },
+          { label: 'Prioridade Alta', value: '12', icon: <AlertCircle size={20} />, color: 'bg-rose-50 text-rose-600' },
+          { label: 'Visitas Hoje', value: '04', icon: <MapPin size={20} />, color: 'bg-emerald-50 text-emerald-600' },
+          { label: 'Pendências AS', value: '03', icon: <MessageSquare size={20} />, color: 'bg-amber-50 text-amber-600' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex flex-col justify-between h-32">
+             <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{stat.label}</span>
+                <div className={`p-2 rounded-xl ${stat.color}`}>{stat.icon}</div>
+             </div>
+             <p className="text-2xl font-black text-slate-800">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+             <h2 className="text-xl font-bold text-slate-800">Gestão Operacional de Assistidos</h2>
+             <p className="text-sm text-slate-400 font-medium">Controle de evoluções e agendamentos sociais.</p>
+          </div>
+          <div className="flex items-center gap-3">
+             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                <input type="text" placeholder="Filtrar por nome ou patologia..." className="w-full md:w-80 h-11 pl-10 pr-4 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none focus:bg-white focus:border-blue-400 transition-all" />
+             </div>
+             <button className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 hover:bg-white transition-all"><Filter size={18} /></button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                <th className="px-8 py-5">BENEFICIÁRIO / PATOLOGIA</th>
+                <th className="px-8 py-5 text-center">PRIORIDADE</th>
+                <th className="px-8 py-5">ÚLT. INTERAÇÃO</th>
+                <th className="px-8 py-5">PRÓX. AÇÃO</th>
+                <th className="px-8 py-5">STATUS EVOLUÇÃO</th>
+                <th className="px-8 py-5 text-right">AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {acompanhamentos.map((ac) => (
+                <tr key={ac.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-8 py-5">
+                    <div>
+                       <p className="text-sm font-black text-slate-700">{ac.beneficiario}</p>
+                       <p className="text-[10px] text-blue-500 font-bold uppercase tracking-wider mt-1">{ac.patologia}</p>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-center">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                      ac.prioridade === 'Alta' ? 'bg-rose-100 text-rose-600' :
+                      ac.prioridade === 'Média' ? 'bg-amber-100 text-amber-600' :
+                      'bg-blue-100 text-blue-600'
+                    }`}>{ac.prioridade}</span>
+                  </td>
+                  <td className="px-8 py-5 text-sm font-medium text-slate-500">{ac.ultimaInteracao}</td>
+                  <td className="px-8 py-5 text-sm font-bold text-slate-600">{ac.proximaAcao}</td>
+                  <td className="px-8 py-5">
+                     <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${ac.statusEvolucao === 'Crítico' ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`} />
+                        <span className="text-xs font-bold text-slate-600">{ac.statusEvolucao}</span>
+                     </div>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button className="p-2 text-slate-300 hover:text-blue-600 transition-colors"><ArrowUpRight size={18} /></button>
+                      <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors"><MoreVertical size={18} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full relative">
-      {/* Toast Feedback */}
       {cancelFeedback && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-top-4 duration-300">
           <div className="bg-[#1E40AF] text-white px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 border border-blue-400/30">
             <div className="bg-white/20 p-2 rounded-xl"><CheckCircle size={20} className="text-emerald-400" /></div>
-            <div><p className="text-sm font-black tracking-tight">Solicitação Cancelada</p><p className="text-[10px] font-medium text-blue-100">{cancelFeedback}</p></div>
+            <div><p className="text-sm font-black tracking-tight">Sucesso</p><p className="text-[10px] font-medium text-blue-100">{cancelFeedback}</p></div>
             <button onClick={() => setCancelFeedback(null)} className="ml-4 p-1 hover:bg-white/10 rounded-lg transition-all"><X size={16} /></button>
           </div>
         </div>
       )}
 
-      {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-[#1E40AF] text-white rounded-2xl shadow-lg shadow-blue-500/20"><HeartHandshake size={32} /></div>
@@ -282,7 +405,6 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
         </div>
       </div>
 
-      {/* Busca e Iniciar Atendimento */}
       <div className="space-y-6">
         <div className="relative max-w-2xl">
           <div className="relative">
@@ -299,7 +421,6 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
             />
           </div>
 
-          {/* Sugestões de Busca */}
           {showSearchResults && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-[24px] shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
               <div className="p-2">
@@ -326,7 +447,6 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
           )}
         </div>
 
-        {/* Card do Assistido Selecionado com Botão Iniciar */}
         {selectedBeneficiary && (
           <div className="max-w-4xl bg-white p-6 rounded-[32px] border border-blue-100 shadow-xl shadow-blue-500/5 animate-in slide-in-from-left-4 duration-500 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">
@@ -342,18 +462,9 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
                 </div>
               </div>
             </div>
-            
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <button 
-                onClick={() => setSelectedBeneficiary(null)}
-                className="p-4 text-slate-400 hover:text-rose-500 bg-slate-50 rounded-2xl transition-all"
-              >
-                <X size={20} />
-              </button>
-              <button 
-                onClick={handleStartService}
-                className="flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-4 bg-[#1E40AF] text-white rounded-[24px] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-800 transition-all active:scale-95"
-              >
+              <button onClick={() => setSelectedBeneficiary(null)} className="p-4 text-slate-400 hover:text-rose-500 bg-slate-50 rounded-2xl transition-all"><X size={20} /></button>
+              <button onClick={handleStartService} className="flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-4 bg-[#1E40AF] text-white rounded-[24px] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-800 transition-all active:scale-95">
                 <UserPlus size={20} /> Iniciar Atendimento
               </button>
             </div>
@@ -363,54 +474,13 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
 
       {activeSubTab === 'visao-geral' && renderOverview()}
       {activeSubTab === 'solicitacoes' && renderRequests()}
-      
-      {/* Fallback de telas vazias */}
-      {(activeSubTab === 'acompanhamento-externo' || activeSubTab === 'historico') && (
-         <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-20 flex flex-col items-center justify-center text-center">
-            {activeSubTab === 'historico' ? <History size={48} className="text-slate-200 mb-4" /> : <Clock size={48} className="text-slate-200 mb-4" />}
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Carregando informações...</p>
-         </div>
-      )}
+      {activeSubTab === 'historico' && renderHistory()}
+      {activeSubTab === 'acompanhamento-externo' && renderAcompanhamento()}
 
-      {/* Modais de Fluxo */}
-      <SocialRequestModal 
-        isOpen={isRequestModalOpen} 
-        onClose={() => setIsRequestModalOpen(false)} 
-        onSave={handleSaveRequest} 
-        mode={requestModalMode} 
-        initialData={selectedRequest} 
-      />
-      
-      <SocialRequestDetailsModal 
-        isOpen={isDetailsModalOpen} 
-        onClose={() => setIsDetailsModalOpen(false)} 
-        onEdit={handleEditRequest} 
-        onCancel={handleCancelRequest} 
-        request={selectedRequest} 
-      />
-      
-      <CancelRequestModal 
-        isOpen={isCancelModalOpen} 
-        onClose={() => setIsCancelModalOpen(false)} 
-        onConfirm={handleConfirmCancel} 
-        requestId={selectedRequest?.id || ''} 
-      />
-
-      <BeneficiaryServiceHubModal 
-        isOpen={isServiceHubOpen}
-        onClose={() => setIsServiceHubOpen(false)}
-        beneficiary={selectedBeneficiary}
-        onNewRequest={handleCreateRequest}
-        onViewHistory={() => {
-          setIsServiceHubOpen(false);
-          handleTabChange('historico');
-        }}
-        onSchedule={() => {
-          setIsServiceHubOpen(false);
-          // Redirecionar para agenda ou abrir modal de agendamento (futuro)
-          alert('Redirecionando para Agenda...');
-        }}
-      />
+      <SocialRequestModal isOpen={isRequestModalOpen} onClose={() => setIsRequestModalOpen(false)} onSave={() => setIsRequestModalOpen(false)} mode={requestModalMode} initialData={selectedRequest} />
+      <SocialRequestDetailsModal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} onEdit={() => {}} onCancel={() => {}} request={selectedRequest} />
+      <CancelRequestModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} onConfirm={() => setIsCancelModalOpen(false)} requestId={selectedRequest?.id || ''} />
+      <BeneficiaryServiceHubModal isOpen={isServiceHubOpen} onClose={() => setIsServiceHubOpen(false)} beneficiary={selectedBeneficiary} onNewRequest={handleCreateRequest} onViewHistory={() => { setIsServiceHubOpen(false); handleTabChange('historico'); }} onSchedule={() => { setIsServiceHubOpen(false); }} />
     </div>
   );
 };

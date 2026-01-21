@@ -431,14 +431,14 @@ const App: React.FC = () => {
       {isNotificationOpen && <NotificationPopover onClose={() => setIsNotificationOpen(false)} />}
       <main className="flex-1 flex flex-col overflow-y-auto bg-[#F8FAFC]">
         {renderContent()}
-        <footer className="mt-auto px-8 py-6 border-t border-slate-100 text-slate-400 text-[10px] flex justify-between bg-white">
+        <footer className="mt-auto px-8 py-6 border-t border-slate-100 text-slate-400 text-[10px] flex justify-between items-center bg-white">
           <div className="flex items-center gap-1">
-            <span>© 2026 SAO - </span>
-            <span className="font-bold">Sistema de Gestão e Assistência</span>
+            {/* Dynamic Logo Placeholder - Will be updated with context/state later */}
+            <div className="h-6 w-20 bg-slate-100 rounded-md flex items-center justify-center text-[8px] font-bold text-slate-300">LOGO ONG</div>
           </div>
-          <div className="flex gap-4 font-semibold">
-            <a href="#" className="hover:text-blue-600 transition-colors">Suporte</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Documentação</a>
+          <div className="flex items-center gap-1 font-semibold">
+            <span>© 2026 SAO - </span>
+            <span>Sistema de Gestão e Assistência</span>
           </div>
         </footer>
       </main>

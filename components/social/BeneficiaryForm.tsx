@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { User, Save, X, Info, Phone, CreditCard, Shield, Stethoscope, MapPin, Upload, Calendar, DollarSign, FileText } from 'lucide-react';
-import { supabase } from '../services/supabase';
-import { translateError } from '../services/errorTranslator';
+import { supabase } from '../../services/supabase';
+import { translateError } from '../../services/errorTranslator';
 
 interface BeneficiaryFormProps {
   onCancel: () => void;

@@ -122,7 +122,7 @@ const SocialAssistanceModule: React.FC<SocialAssistanceModuleProps> = ({ initial
 
       setIsSearching(true);
       try {
-        const { supabase } = await import('../services/supabase');
+        const { supabase } = await import('../../services/supabase');
 
         const { data, error } = await supabase
           .from('ASSISTIDOS')

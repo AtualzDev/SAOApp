@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase, supabaseUrl, supabaseAnonKey } from '../services/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../../services/supabase';
 import { createClient } from '@supabase/supabase-js';
-import { translateError } from '../services/errorTranslator';
+import { translateError } from '../../services/errorTranslator';
 import {
   Search, Plus, Pencil, Settings as SettingsIcon, Key, User, ShieldCheck, History,
   MessageSquare, Package, Calendar, CreditCard, Stethoscope, X, Mail, ChevronRight,

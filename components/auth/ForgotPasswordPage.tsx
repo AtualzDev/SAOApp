@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
-import { supabase } from '../services/supabase';
-import { translateError } from '../services/errorTranslator';
+import { supabase } from '../../services/supabase';
+import { translateError } from '../../services/errorTranslator';
 
 interface ForgotPasswordPageProps {
   onBackToLogin: () => void;

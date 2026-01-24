@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Search, ChevronRight, User } from 'lucide-react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../../services/supabase';
 
 export interface Beneficiary {
   id: string;

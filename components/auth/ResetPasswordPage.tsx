@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { supabase } from '../services/supabase';
-import { translateError } from '../services/errorTranslator';
+import { supabase } from '../../services/supabase';
+import { translateError } from '../../services/errorTranslator';
 import { ArrowLeft, Lock, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 interface ResetPasswordPageProps {

@@ -1,40 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
-import LaunchTable from './components/LaunchTable';
-import LaunchForm from './components/LaunchForm';
-import ProductTable from './components/ProductTable';
-import ProductForm from './components/ProductForm';
-import CategoryTable from './components/CategoryTable';
-import CategoryForm from './components/CategoryForm';
-import SectorTable from './components/SectorTable';
-import SectorForm from './components/SectorForm';
-import ExitTable from './components/ExitTable';
-import ExitForm from './components/ExitForm';
-import BeneficiaryTable from './components/BeneficiaryTable';
-import BeneficiaryForm from './components/BeneficiaryForm';
-import AuditPage from './components/AuditPage';
-import SocialAssistanceModule from './components/SocialAssistanceModule';
-import StockDashboard from './components/StockDashboard';
-import NotificationPopover from './components/NotificationPopover';
-import LoginPage from './components/LoginPage';
-import ForgotPasswordPage from './components/ForgotPasswordPage';
-import ResetPasswordPage from './components/ResetPasswordPage';
-import PrivacyPolicyPage from './components/PrivacyPolicyPage';
-import TermsOfUsePage from './components/TermsOfUsePage';
-import Dashboard from './components/Dashboard';
-import Agenda from './components/Agenda';
-import UserProfilePage from './components/UserProfilePage';
-import SettingsPage from './components/SettingsPage';
-import RoutePage from './components/RoutePage';
-import ReportsPage from './components/ReportsPage';
-import ManagementDashboard from './components/ManagementDashboard';
-import SupportPage from './components/SupportPage';
-import FinancePage from './components/FinancePage';
-import ManagementFinancePage from './components/ManagementFinancePage';
-import ManagementSubscriptionsPage from './components/ManagementSubscriptionsPage';
-import ManagementOngsPage from './components/ManagementOngsPage';
-import ManagementLeadsPage from './components/ManagementLeadsPage';
-import LandingPage from './components/LandingPage';
+import Sidebar from './components/layout/Sidebar';
+import LaunchTable from './components/stock/LaunchTable';
+import LaunchForm from './components/stock/LaunchForm';
+import ProductTable from './components/stock/ProductTable';
+import ProductForm from './components/stock/ProductForm';
+import CategoryTable from './components/stock/CategoryTable';
+import CategoryForm from './components/stock/CategoryForm';
+import SectorTable from './components/stock/SectorTable';
+import SectorForm from './components/stock/SectorForm';
+import ExitTable from './components/stock/ExitTable';
+import ExitForm from './components/stock/ExitForm';
+import BeneficiaryTable from './components/social/BeneficiaryTable';
+import BeneficiaryForm from './components/social/BeneficiaryForm';
+import AuditPage from './components/management/AuditPage';
+import SocialAssistanceModule from './components/social/SocialAssistanceModule';
+import StockDashboard from './components/stock/StockDashboard';
+import NotificationPopover from './components/common/NotificationPopover';
+import LoginPage from './components/auth/LoginPage';
+import ForgotPasswordPage from './components/auth/ForgotPasswordPage';
+import ResetPasswordPage from './components/auth/ResetPasswordPage';
+import PrivacyPolicyPage from './components/auth/PrivacyPolicyPage';
+import TermsOfUsePage from './components/auth/TermsOfUsePage';
+import Dashboard from './components/common/Dashboard';
+import Agenda from './components/medical/Agenda';
+import UserProfilePage from './components/common/UserProfilePage';
+import SettingsPage from './components/management/SettingsPage';
+import RoutePage from './components/logistics/RoutePage';
+import ReportsPage from './components/management/ReportsPage';
+import ManagementDashboard from './components/management/ManagementDashboard';
+import SupportPage from './components/common/SupportPage';
+import FinancePage from './components/financial/FinancePage';
+import ManagementFinancePage from './components/financial/ManagementFinancePage';
+import ManagementSubscriptionsPage from './components/financial/ManagementSubscriptionsPage';
+import ManagementOngsPage from './components/management/ManagementOngsPage';
+import ManagementLeadsPage from './components/management/ManagementLeadsPage';
+import LandingPage from './components/auth/LandingPage';
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map } from 'lucide-react';
 import { supabase } from './services/supabase';
@@ -47,6 +47,7 @@ const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isManagementMode, setIsManagementMode] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
 
   // Monitora se entra no modo gestão
   useEffect(() => {
@@ -358,7 +359,7 @@ const App: React.FC = () => {
 
     if (activeTab === 'entradas' || activeTab === 'estoque-entradas') {
       if (isFormOpen) {
-        return <LaunchForm onCancel={() => setIsFormOpen(false)} />;
+        return <LaunchForm onCancel={() => { setIsFormOpen(false); setEditingTransaction(null); }} initialData={editingTransaction} />;
       }
 
       return (
@@ -370,14 +371,19 @@ const App: React.FC = () => {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsFormOpen(true)}
+                onClick={() => { setEditingTransaction(null); setIsFormOpen(true); }}
                 className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95 font-bold text-sm"
               >
                 <Plus size={18} /> Novo lançamento
               </button>
             </div>
           </header>
-          <section className="px-6 md:px-8 py-6 space-y-6"><LaunchTable launches={MOCK_LAUNCHES} /></section>
+          <section className="px-6 md:px-8 py-6 space-y-6">
+            <LaunchTable
+              launches={MOCK_LAUNCHES}
+              onEdit={(t) => { setEditingTransaction(t); setIsFormOpen(true); }}
+            />
+          </section>
         </>
       );
     }

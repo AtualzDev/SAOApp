@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SIDEBAR_ITEMS } from '../constants';
+import { SIDEBAR_ITEMS } from '../../constants';
 import {
   ChevronRight,
   ChevronDown,
@@ -14,7 +14,7 @@ import {
   Users2,
   Headphones
 } from 'lucide-react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../../services/supabase';
 
 interface SidebarProps {
   activeId: string;

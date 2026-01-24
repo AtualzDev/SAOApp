@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
-import { translateError } from '../services/errorTranslator';
+import { supabase } from '../../services/supabase';
+import { translateError } from '../../services/errorTranslator';
 import {
   User,
   Mail,

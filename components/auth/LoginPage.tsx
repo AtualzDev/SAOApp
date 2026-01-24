@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { supabase } from '../services/supabase';
-import { translateError } from '../services/errorTranslator';
+import { supabase } from '../../services/supabase';
+import { translateError } from '../../services/errorTranslator';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 interface LoginPageProps {

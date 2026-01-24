@@ -7,6 +7,8 @@ const inventoryController = require('../controllers/inventoryController');
 // Products
 router.get('/products', inventoryController.listProducts);
 router.post('/products', inventoryController.createProduct);
+router.put('/products/:id', inventoryController.updateProduct);
+router.delete('/products/:id', inventoryController.deleteProduct);
 
 // Units
 router.get('/units', inventoryController.listUnits);

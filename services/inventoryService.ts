@@ -82,6 +82,23 @@ export const inventoryService = {
         return response.json();
     },
 
+    async updateProduct(id: string, product: Partial<Product>): Promise<Product> {
+        const response = await fetch(`${API_URL}/products/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product),
+        });
+        if (!response.ok) throw new Error('Failed to update product');
+        return response.json();
+    },
+
+    async deleteProduct(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/products/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete product');
+    },
+
     // --- Units ---
     async listUnits(): Promise<Unit[]> {
         const response = await fetch(`${API_URL}/units`);

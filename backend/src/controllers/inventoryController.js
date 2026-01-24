@@ -116,6 +116,71 @@ const inventoryController = {
         }
     },
 
+    async updateProduct(req, res) {
+        const { id } = req.params;
+        const { nome, descricao, categoria_id, setor, unidade_medida, estoque_minimo, valor_referencia, codigo } = req.body;
+
+        try {
+            const updateData = {};
+            if (nome !== undefined) updateData.nome = nome;
+            if (descricao !== undefined) updateData.descricao = descricao;
+            if (categoria_id !== undefined) updateData.categoria_id = categoria_id;
+            if (setor !== undefined) updateData.setor = setor;
+            if (unidade_medida !== undefined) updateData.unidade_medida = unidade_medida;
+            if (estoque_minimo !== undefined) updateData.estoque_minimo = estoque_minimo;
+            if (valor_referencia !== undefined) updateData.valor_referencia = valor_referencia;
+            if (codigo !== undefined) updateData.codigo = codigo;
+
+            const { data, error } = await supabase
+                .from('produtos')
+                .update(updateData)
+                .eq('id', id)
+                .select();
+
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                return res.status(404).json({ error: 'Product not found' });
+            }
+
+            res.json(data[0]);
+        } catch (error) {
+            console.error('Error updating product:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async deleteProduct(req, res) {
+        const { id } = req.params;
+
+        try {
+            // Verifica se o produto tem lançamentos associados
+            const { data: launches, error: launchError } = await supabase
+                .from('lancamentos_itens')
+                .select('id')
+                .eq('produto_id', id)
+                .limit(1);
+
+            if (launchError) throw launchError;
+
+            if (launches && launches.length > 0) {
+                return res.status(400).json({
+                    error: 'Não é possível excluir produto com lançamentos associados'
+                });
+            }
+
+            const { error } = await supabase
+                .from('produtos')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            res.status(204).send();
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     // --- Launches (Header + Items) ---
 
     async createLaunch(req, res) {

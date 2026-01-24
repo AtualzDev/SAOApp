@@ -4,6 +4,7 @@ import LaunchTable from './components/stock/LaunchTable';
 import LaunchForm from './components/stock/LaunchForm';
 import ProductTable from './components/stock/ProductTable';
 import ProductForm from './components/stock/ProductForm';
+import ProductEditModal from './components/stock/ProductEditModal';
 import CategoryTable from './components/stock/CategoryTable';
 import CategoryForm from './components/stock/CategoryForm';
 import SectorTable from './components/stock/SectorTable';
@@ -48,6 +49,7 @@ const App: React.FC = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isManagementMode, setIsManagementMode] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
   // Monitora se entra no modo gestão
   useEffect(() => {
@@ -352,7 +354,22 @@ const App: React.FC = () => {
               </button>
             </div>
           </header>
-          <section className="px-6 md:px-8 py-6 space-y-6"><ProductTable /></section>
+          <section className="px-6 md:px-8 py-6 space-y-6">
+            <ProductTable
+              onEdit={(product) => setEditingProduct(product)}
+            />
+          </section>
+          {editingProduct && (
+            <ProductEditModal
+              product={editingProduct}
+              onClose={() => setEditingProduct(null)}
+              onSave={() => {
+                setEditingProduct(null);
+                // Força reload da tabela
+                window.location.reload();
+              }}
+            />
+          )}
         </>
       );
     }

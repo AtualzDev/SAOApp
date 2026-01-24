@@ -4,11 +4,15 @@ const API_URL = 'http://localhost:3001/api/inventory';
 export interface Product {
     id: string;
     nome: string;
+    codigo?: string;
     descricao?: string;
     categoria?: string;
+    categoria_id?: string;
+    setor?: string;
     unidade_medida?: string;
     estoque_minimo?: number;
     estoque_atual: number;
+    valor_referencia?: number;
 }
 
 export interface Unit {

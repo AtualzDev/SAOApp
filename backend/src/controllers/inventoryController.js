@@ -120,6 +120,10 @@ const inventoryController = {
         const { id } = req.params;
         const { nome, descricao, categoria_id, setor, unidade_medida, estoque_minimo, valor_referencia, codigo } = req.body;
 
+        console.log('=== UPDATE PRODUCT ===');
+        console.log('ID:', id);
+        console.log('Body:', req.body);
+
         try {
             const updateData = {};
             if (nome !== undefined) updateData.nome = nome;
@@ -130,6 +134,8 @@ const inventoryController = {
             if (estoque_minimo !== undefined) updateData.estoque_minimo = estoque_minimo;
             if (valor_referencia !== undefined) updateData.valor_referencia = valor_referencia;
             if (codigo !== undefined) updateData.codigo = codigo;
+
+            console.log('Update Data:', updateData);
 
             const { data, error } = await supabase
                 .from('produtos')
@@ -142,6 +148,7 @@ const inventoryController = {
                 return res.status(404).json({ error: 'Product not found' });
             }
 
+            console.log('Product updated successfully:', data[0]);
             res.json(data[0]);
         } catch (error) {
             console.error('Error updating product:', error);

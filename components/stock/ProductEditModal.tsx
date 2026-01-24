@@ -59,8 +59,10 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onClose, o
             setLoading(true);
 
             if (product?.id) {
+                console.log('Atualizando produto:', product.id, formData);
                 await inventoryService.updateProduct(product.id, formData);
             } else {
+                console.log('Criando novo produto:', formData);
                 await inventoryService.createProduct(formData);
             }
 
@@ -68,7 +70,7 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onClose, o
             onClose();
         } catch (error) {
             console.error('Erro ao salvar produto:', error);
-            alert('Erro ao salvar produto');
+            alert('Erro ao salvar produto: ' + (error as Error).message);
         } finally {
             setLoading(false);
         }

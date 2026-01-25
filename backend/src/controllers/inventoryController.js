@@ -31,10 +31,99 @@ const inventoryController = {
         }
     },
 
+    // --- Sectors (Setores) ---
+    async listSectors(req, res) {
+        try {
+            const { data, error } = await supabase
+                .from('setores')
+                .select('*')
+                .eq('deletado', false)
+                .order('nome');
+            if (error) throw error;
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async createSector(req, res) {
+        const { name, description } = req.body;
+        try {
+            const { data, error } = await supabase
+                .from('setores')
+                .insert([{
+                    nome: name,
+                    descricao: description,
+                    deletado: 'no'
+                }])
+                .select();
+            if (error) throw error;
+            res.status(201).json(data[0]);
+        } catch (error) {
+            console.error('Error creating sector:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async updateSector(req, res) {
+        const { id } = req.params;
+        const { name, description } = req.body;
+
+        try {
+            const updateData = {};
+            if (name !== undefined) updateData.nome = name;
+            if (description !== undefined) updateData.descricao = description;
+
+            const { data, error } = await supabase
+                .from('setores')
+                .update(updateData)
+                .eq('id', id)
+                .select();
+
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                return res.status(404).json({ error: 'Sector not found' });
+            }
+
+            res.json(data[0]);
+        } catch (error) {
+            console.error('Error updating sector:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async deleteSector(req, res) {
+        const { id } = req.params;
+
+        try {
+            // Soft delete
+            const { data, error } = await supabase
+                .from('setores')
+                .update({ deletado: true })
+                .eq('id', id)
+                .select();
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                return res.status(404).json({ error: 'Sector not found' });
+            }
+
+            res.status(200).json({ message: 'Sector deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting sector:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     // --- Categories ---
     async listCategories(req, res) {
         try {
-            const { data, error } = await supabase.from('categorias').select('*').order('nome');
+            const { data, error } = await supabase
+                .from('categorias')
+                .select('*')
+                .eq('deletado', false)
+                .order('nome');
             if (error) throw error;
             res.json(data);
         } catch (error) {
@@ -45,10 +134,70 @@ const inventoryController = {
     async createCategory(req, res) {
         const { name, sector, description } = req.body;
         try {
-            const { data, error } = await supabase.from('categorias').insert([{ nome: name, setor: sector, descricao: description }]).select();
+            const { data, error } = await supabase
+                .from('categorias')
+                .insert([{
+                    nome: name,
+                    setor: sector,
+                    descricao: description,
+                    deletado: 'no'
+                }])
+                .select();
             if (error) throw error;
             res.status(201).json(data[0]);
         } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async updateCategory(req, res) {
+        const { id } = req.params;
+        const { name, sector, description } = req.body;
+
+        try {
+            const updateData = {};
+            if (name !== undefined) updateData.nome = name;
+            if (sector !== undefined) updateData.setor = sector;
+            if (description !== undefined) updateData.descricao = description;
+
+            const { data, error } = await supabase
+                .from('categorias')
+                .update(updateData)
+                .eq('id', id)
+                .select();
+
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                return res.status(404).json({ error: 'Category not found' });
+            }
+
+            res.json(data[0]);
+        } catch (error) {
+            console.error('Error updating category:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async deleteCategory(req, res) {
+        const { id } = req.params;
+
+        try {
+            // Soft delete
+            const { data, error } = await supabase
+                .from('categorias')
+                .update({ deletado: true })
+                .eq('id', id)
+                .select();
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                return res.status(404).json({ error: 'Category not found' });
+            }
+
+            res.status(200).json({ message: 'Category deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting category:', error);
             res.status(500).json({ error: error.message });
         }
     },
@@ -87,13 +236,41 @@ const inventoryController = {
 
     async listProducts(req, res) {
         try {
-            const { data, error } = await supabase
+            // Fetch products (only non-deleted ones)
+            const { data: products, error: productsError } = await supabase
                 .from('produtos')
                 .select('*')
+                .eq('deletado', false)  // Only show non-deleted products
                 .order('nome', { ascending: true });
 
-            if (error) throw error;
-            res.json(data);
+            if (productsError) throw productsError;
+
+            // Fetch categories
+            const { data: categories, error: categoriesError } = await supabase
+                .from('categorias')
+                .select('*');
+
+            if (categoriesError) throw categoriesError;
+
+            // Create a map of categories for quick lookup
+            const categoryMap = {};
+            if (categories) {
+                categories.forEach(cat => {
+                    categoryMap[cat.id] = cat;
+                });
+            }
+
+            // Transform data to include categoria_nome at root level for easier access
+            const transformedData = products.map(product => {
+                const category = product.categoria ? categoryMap[product.categoria] : null;
+                return {
+                    ...product,
+                    categoria_nome: category?.nome || null,
+                    categoria_setor: category?.setor || null
+                };
+            });
+
+            res.json(transformedData);
         } catch (error) {
             console.error('Error fetching products:', error);
             res.status(500).json({ error: error.message });
@@ -101,14 +278,25 @@ const inventoryController = {
     },
 
     async createProduct(req, res) {
-        const { nome, descricao, categoria, unidade_medida, estoque_minimo, codigo } = req.body;
+        const { nome, descricao, categoria, setor, unidade_medida, estoque_inicial, estoque_minimo, valor_referencia, codigo } = req.body;
         try {
             const { data, error } = await supabase
                 .from('produtos')
-                .insert([{ nome, descricao, categoria, unidade_medida, estoque_minimo, codigo, estoque_atual: 0 }])
+                .insert([{
+                    nome,
+                    descricao,
+                    categoria,
+                    setor,
+                    unidade_medida,
+                    estoque_minimo,
+                    estoque_atual: estoque_inicial || 0,  // Estoque atual inicia com o valor do estoque inicial
+                    valor_referencia: valor_referencia || 0,
+                    codigo
+                }])
                 .select();
 
             if (error) throw error;
+            console.log('Product created:', data[0]);
             res.status(201).json(data[0]);
         } catch (error) {
             console.error('Error creating product:', error);
@@ -118,7 +306,7 @@ const inventoryController = {
 
     async updateProduct(req, res) {
         const { id } = req.params;
-        const { nome, descricao, categoria_id, setor, unidade_medida, estoque_minimo, valor_referencia, codigo } = req.body;
+        const { nome, descricao, categoria_id, categoria, setor, unidade_medida, estoque_minimo, valor_referencia, codigo } = req.body;
 
         console.log('=== UPDATE PRODUCT ===');
         console.log('ID:', id);
@@ -128,7 +316,9 @@ const inventoryController = {
             const updateData = {};
             if (nome !== undefined) updateData.nome = nome;
             if (descricao !== undefined) updateData.descricao = descricao;
-            if (categoria_id !== undefined) updateData.categoria_id = categoria_id;
+            // Use categoria_id se fornecido, senão use categoria
+            if (categoria_id !== undefined) updateData.categoria = categoria_id;
+            else if (categoria !== undefined) updateData.categoria = categoria;
             if (setor !== undefined) updateData.setor = setor;
             if (unidade_medida !== undefined) updateData.unidade_medida = unidade_medida;
             if (estoque_minimo !== undefined) updateData.estoque_minimo = estoque_minimo;
@@ -160,33 +350,27 @@ const inventoryController = {
         const { id } = req.params;
 
         try {
-            // Verifica se o produto tem lançamentos associados
-            const { data: launches, error: launchError } = await supabase
-                .from('lancamentos_itens')
-                .select('id')
-                .eq('produto_id', id)
-                .limit(1);
-
-            if (launchError) throw launchError;
-
-            if (launches && launches.length > 0) {
-                return res.status(400).json({
-                    error: 'Não é possível excluir produto com lançamentos associados'
-                });
-            }
-
-            const { error } = await supabase
+            // Soft delete: marca o produto como deletado ao invés de excluir permanentemente
+            const { data, error } = await supabase
                 .from('produtos')
-                .delete()
-                .eq('id', id);
+                .update({ deletado: true })
+                .eq('id', id)
+                .select();
 
             if (error) throw error;
-            res.status(204).send();
+
+            if (!data || data.length === 0) {
+                return res.status(404).json({ error: 'Product not found' });
+            }
+
+            console.log('Product soft deleted:', data[0]);
+            res.status(200).json({ message: 'Product deleted successfully', product: data[0] });
         } catch (error) {
             console.error('Error deleting product:', error);
             res.status(500).json({ error: error.message });
         }
     },
+
 
     // --- Launches (Header + Items) ---
 

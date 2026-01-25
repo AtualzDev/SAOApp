@@ -20,6 +20,23 @@ const MOCK_SECTORS: InventorySector[] = [
 ];
 
 const SectorTable: React.FC = () => {
+  // Estados para paginação e busca
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  // Filtragem
+  const filteredSectors = MOCK_SECTORS.filter(sector =>
+    sector.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sector.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Lógica de Paginação
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredSectors.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredSectors.length / itemsPerPage);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Ativo': return 'bg-emerald-100 text-emerald-600';
@@ -35,16 +52,18 @@ const SectorTable: React.FC = () => {
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-slate-700">Setores de Armazenamento</h2>
           <span className="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200">
-            {MOCK_SECTORS.length} setores
+            {filteredSectors.length} setores
           </span>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="relative flex-1 md:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Buscar por nome ou responsável..." 
+            <input
+              type="text"
+              placeholder="Buscar por nome ou responsável..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all"
             />
           </div>
@@ -67,7 +86,7 @@ const SectorTable: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {MOCK_SECTORS.map((sector) => (
+            {currentItems.map((sector) => (
               <tr key={sector.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -101,9 +120,9 @@ const SectorTable: React.FC = () => {
                       <span>{Math.round((sector.totalItens / 2000) * 100)}%</span>
                     </div>
                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-indigo-500 h-full rounded-full" 
-                        style={{ width: `${Math.min((sector.totalItens / 2000) * 100, 100)}%` }} 
+                      <div
+                        className="bg-indigo-500 h-full rounded-full"
+                        style={{ width: `${Math.min((sector.totalItens / 2000) * 100, 100)}%` }}
                       />
                     </div>
                   </div>
@@ -128,12 +147,39 @@ const SectorTable: React.FC = () => {
 
       <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
         <p className="text-xs text-slate-400 font-medium">Organização por setores facilita a contagem e auditoria do estoque.</p>
-        <div className="flex items-center gap-2">
-           <button className="px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-500 hover:bg-white transition-colors shadow-sm">Imprimir Etiquetas QR</button>
-        </div>
+
+        {/* Controles de Paginação (Visível apenas se > 1 página, ou seja > 10 itens) */}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-white disabled:opacity-50 transition-colors shadow-sm"
+            >
+              Anterior
+            </button>
+            <span className="text-xs font-bold text-slate-600">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-white disabled:opacity-50 transition-colors shadow-sm"
+            >
+              Próximo
+            </button>
+          </div>
+        )}
+        {/* Se não tiver paginação, mantém o botão original ou remove? Vou manter o botão original se não tiver paginação para não ficar vazio, mas o pedido era "paginação". Se <= 10, não precisa de controles. */}
+        {totalPages <= 1 && (
+          <div className="flex items-center gap-2">
+            <button className="px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-500 hover:bg-white transition-colors shadow-sm">Imprimir Etiquetas QR</button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
 
 export default SectorTable;

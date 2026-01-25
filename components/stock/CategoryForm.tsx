@@ -1,18 +1,82 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LayoutGrid, Save, X, Palette, HelpCircle, Box } from 'lucide-react';
+import { inventoryService, Category } from '../../services/inventoryService';
 
 interface CategoryFormProps {
   onCancel: () => void;
+  initialData?: Category;
+  onSuccess?: () => void;
 }
 
-const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel }) => {
+const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel, initialData, onSuccess }) => {
   const [selectedColor, setSelectedColor] = useState('bg-indigo-500');
-  
+  const [loading, setLoading] = useState(false);
+  const [sectors, setSectors] = useState<{ id: string, nome: string }[]>([]);
+
+  const [formData, setFormData] = useState({
+    nome: '',
+    setor: '',
+    descricao: ''
+  });
+
   const colors = [
-    'bg-amber-500', 'bg-orange-500', 'bg-rose-500', 'bg-pink-500', 
+    'bg-amber-500', 'bg-orange-500', 'bg-rose-500', 'bg-pink-500',
     'bg-indigo-500', 'bg-blue-500', 'bg-cyan-500', 'bg-emerald-500'
   ];
+
+  useEffect(() => {
+    loadSectors();
+    if (initialData) {
+      setFormData({
+        nome: initialData.nome,
+        setor: initialData.setor || '',
+        descricao: initialData.descricao || ''
+      });
+      // Tenta inferir cor se salvássemos no banco, mas por enquanto é visual local
+    }
+  }, [initialData]);
+
+  const loadSectors = async () => {
+    try {
+      // Assume que createSector retorna {id, nome}
+      const data = await inventoryService.listSectors();
+      setSectors(data);
+    } catch (error) {
+      console.error('Erro ao carregar setores', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.nome.trim()) return alert('Nome é obrigatório');
+
+    try {
+      setLoading(true);
+
+      // Mapear para o formato esperado pelo backend (inglês)
+      const payload: any = {
+        name: formData.nome,
+        sector: formData.setor,
+        description: formData.descricao
+      };
+
+      if (initialData) {
+        await inventoryService.updateCategory(initialData.id, payload);
+      } else {
+        await inventoryService.createCategory(payload);
+      }
+
+      if (onSuccess) onSuccess();
+      onCancel();
+    } catch (error: any) {
+      console.error('Erro ao salvar categoria:', error);
+      const msg = error.message || 'Erro desconhecido';
+      alert(`Erro ao salvar categoria: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-4xl mx-auto w-full animate-in slide-in-from-bottom-4 duration-300">
@@ -22,8 +86,12 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel }) => {
             <LayoutGrid size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Nova Categoria</h1>
-            <p className="text-xs text-slate-400">Defina uma nova classificação para os itens do estoque</p>
+            <h1 className="text-xl font-bold text-slate-800">
+              {initialData ? 'Editar Categoria' : 'Nova Categoria'}
+            </h1>
+            <p className="text-xs text-slate-400">
+              {initialData ? 'Atualize as informações da categoria' : 'Defina uma nova classificação para os itens do estoque'}
+            </p>
           </div>
         </div>
         <button onClick={onCancel} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
@@ -36,35 +104,52 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel }) => {
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm space-y-5">
             <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wider">
-               Identificação da Categoria
+              Identificação da Categoria
             </h3>
-            
+
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-slate-400 uppercase">Nome da Categoria</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Material de Limpeza Profissional" 
+                <input
+                  type="text"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  placeholder="Ex: Material de Limpeza Profissional"
                   className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all font-medium"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-slate-400 uppercase">Setor de Atuação</label>
-                <select className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all cursor-pointer font-medium">
-                  <option>Cozinha Central</option>
-                  <option>Administrativo</option>
-                  <option>Bazar Social</option>
-                  <option>Enfermaria</option>
-                  <option>Limpeza e Higiene</option>
+                <select
+                  value={formData.setor}
+                  onChange={(e) => setFormData({ ...formData, setor: e.target.value })}
+                  className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all cursor-pointer font-medium"
+                >
+                  <option value="">Selecione um setor...</option>
+                  {sectors.map(sector => (
+                    <option key={sector.id} value={sector.nome}>{sector.nome}</option>
+                  ))}
+                  {/* Fallback caso não tenha setores carregados ainda */}
+                  {sectors.length === 0 && (
+                    <>
+                      <option value="Cozinha Central">Cozinha Central</option>
+                      <option value="Administrativo">Administrativo</option>
+                      <option value="Bazar Social">Bazar Social</option>
+                      <option value="Enfermaria">Enfermaria</option>
+                      <option value="Limpeza e Higiene">Limpeza e Higiene</option>
+                    </>
+                  )}
                 </select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-slate-400 uppercase">Descrição da Finalidade</label>
-                <textarea 
-                  rows={3} 
-                  placeholder="Explique o que deve ser classificado aqui..." 
+                <textarea
+                  rows={3}
+                  value={formData.descricao}
+                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                  placeholder="Explique o que deve ser classificado aqui..."
                   className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all resize-none"
                 />
               </div>
@@ -76,9 +161,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel }) => {
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm space-y-4">
             <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2 uppercase tracking-wider">
-               Identidade Visual
+              Identidade Visual
             </h3>
-            
+
             <div className="flex flex-col items-center gap-4 py-4">
               <div className={`w-16 h-16 ${selectedColor} rounded-2xl flex items-center justify-center text-white shadow-lg`}>
                 <LayoutGrid size={32} />
@@ -93,9 +178,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel }) => {
                 <button
                   key={color}
                   onClick={() => setSelectedColor(color)}
-                  className={`w-full h-8 rounded-lg transition-all ${color} ${
-                    selectedColor === color ? 'ring-2 ring-offset-2 ring-slate-400' : 'hover:scale-105'
-                  }`}
+                  className={`w-full h-8 rounded-lg transition-all ${color} ${selectedColor === color ? 'ring-2 ring-offset-2 ring-slate-400' : 'hover:scale-105'
+                    }`}
                 />
               ))}
             </div>
@@ -116,14 +200,18 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel }) => {
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
-        <button 
+        <button
           onClick={onCancel}
           className="px-8 py-3 border border-slate-200 text-slate-500 rounded-xl font-bold hover:bg-slate-50 transition-all"
         >
           Cancelar
         </button>
-        <button className="px-12 py-3 bg-[#1E40AF] text-white rounded-xl font-bold hover:bg-indigo-800 shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center gap-2">
-          <Save size={18} /> Criar Categoria
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="px-12 py-3 bg-[#1E40AF] text-white rounded-xl font-bold hover:bg-indigo-800 shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
+        >
+          <Save size={18} /> {loading ? 'Salvando...' : (initialData ? 'Atualizar Categoria' : 'Criar Categoria')}
         </button>
       </div>
     </div>

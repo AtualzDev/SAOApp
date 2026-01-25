@@ -28,7 +28,8 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onClose, o
             setFormData({
                 nome: product.nome || '',
                 codigo: product.codigo || '',
-                categoria_id: product.categoria_id || '',
+                // Fix: Use product.categoria (the ID field) for categoria_id
+                categoria_id: product.categoria || product.categoria_id || '',
                 setor: product.setor || '',
                 unidade_medida: product.unidade_medida || 'UN',
                 estoque_minimo: product.estoque_minimo || 0,

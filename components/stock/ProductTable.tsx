@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Eye, Pencil, Trash2, AlertTriangle, PackageCheck, PackageX } from 'lucide-react';
 import { inventoryService, Product } from '../../services/inventoryService';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 interface ProductTableProps {
   onEdit?: (product: Product) => void;
@@ -12,6 +13,10 @@ const ProductTable: React.FC<ProductTableProps> = ({ onEdit, onView }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; product: Product | null }>({
+    isOpen: false,
+    product: null
+  });
 
   useEffect(() => {
     loadProducts();
@@ -30,11 +35,16 @@ const ProductTable: React.FC<ProductTableProps> = ({ onEdit, onView }) => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+  const handleDeleteClick = (product: Product) => {
+    setDeleteModal({ isOpen: true, product });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.product) return;
 
     try {
-      await inventoryService.deleteProduct(id);
+      await inventoryService.deleteProduct(deleteModal.product.id);
+      setDeleteModal({ isOpen: false, product: null });
       loadProducts();
     } catch (error) {
       console.error('Erro ao excluir produto:', error);
@@ -42,9 +52,21 @@ const ProductTable: React.FC<ProductTableProps> = ({ onEdit, onView }) => {
     }
   };
 
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, product: null });
+  };
+
   const getStockStatus = (estoque: number, minimo: number) => {
-    if (estoque === 0) return { label: 'ESGOTADO', color: 'bg-rose-100 text-rose-600', icon: <PackageX size={14} /> };
-    if (estoque <= minimo) return { label: 'CRÍTICO', color: 'bg-amber-100 text-amber-600', icon: <AlertTriangle size={14} /> };
+    if (estoque === 0) {
+      return { label: 'ESGOTADO', color: 'bg-rose-100 text-rose-600', icon: <PackageX size={14} /> };
+    }
+    if (estoque <= minimo) {
+      return { label: 'CRÍTICO', color: 'bg-amber-100 text-amber-600', icon: <AlertTriangle size={14} /> };
+    }
+    // New: Warning state when stock is within 20% above minimum
+    if (estoque <= minimo * 1.2) {
+      return { label: 'ATENÇÃO', color: 'bg-yellow-100 text-yellow-600', icon: <AlertTriangle size={14} /> };
+    }
     return { label: 'EM ESTOQUE', color: 'bg-emerald-100 text-emerald-600', icon: <PackageCheck size={14} /> };
   };
 
@@ -118,7 +140,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ onEdit, onView }) => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                        {product.categoria || '-'}
+                        {product.categoria_nome || '-'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -155,7 +177,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ onEdit, onView }) => {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(product.id)}
+                          onClick={() => handleDeleteClick(product)}
                           className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                           title="Excluir"
                         >
@@ -178,6 +200,14 @@ const ProductTable: React.FC<ProductTableProps> = ({ onEdit, onView }) => {
           <button className="px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-500 hover:bg-white transition-colors">Próximo</button>
         </div>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        productName={deleteModal.product?.nome || ''}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </div>
   );
 };

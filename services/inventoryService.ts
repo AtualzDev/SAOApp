@@ -6,11 +6,14 @@ export interface Product {
     nome: string;
     codigo?: string;
     descricao?: string;
-    categoria?: string;
+    categoria?: string; // Category ID (UUID)
     categoria_id?: string;
-    setor?: string;
+    categoria_nome?: string; // Category name for display
+    categoria_setor?: string; // Category's default sector
+    setor?: string; // Product-specific sector (can override category default)
     unidade_medida?: string;
     estoque_minimo?: number;
+    estoque_inicial?: number; // Para criação de produto
     estoque_atual: number;
     valor_referencia?: number;
 }
@@ -123,6 +126,43 @@ export const inventoryService = {
         return response.json();
     },
 
+    // --- Sectors ---
+    async listSectors(): Promise<any[]> {
+        const response = await fetch(`${API_URL}/sectors`);
+        if (!response.ok) throw new Error('Failed to fetch sectors');
+        return response.json();
+    },
+
+    async createSector(sector: { name: string; description: string }): Promise<any> {
+        const response = await fetch(`${API_URL}/sectors`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sector),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to create sector');
+        }
+        return response.json();
+    },
+
+    async updateSector(id: string, sector: { name: string; description: string }): Promise<any> {
+        const response = await fetch(`${API_URL}/sectors/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sector),
+        });
+        if (!response.ok) throw new Error('Failed to update sector');
+        return response.json();
+    },
+
+    async deleteSector(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/sectors/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete sector');
+    },
+
     // --- Categories ---
     async listCategories(): Promise<Category[]> {
         const response = await fetch(`${API_URL}/categories`);
@@ -138,6 +178,23 @@ export const inventoryService = {
         });
         if (!response.ok) throw new Error('Failed to create category');
         return response.json();
+    },
+
+    async updateCategory(id: string, category: { name: string; sector: string; description: string }): Promise<Category> {
+        const response = await fetch(`${API_URL}/categories/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(category),
+        });
+        if (!response.ok) throw new Error('Failed to update category');
+        return response.json();
+    },
+
+    async deleteCategory(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/categories/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete category');
     },
 
     // --- Suppliers ---

@@ -38,6 +38,7 @@ import LandingPage from './components/auth/LandingPage';
 import { MOCK_LAUNCHES } from './constants';
 import { Plus, Package, ClipboardList, PackageMinus, Map } from 'lucide-react';
 import { supabase } from './services/supabase';
+import BeneficiaryProfilePage from './components/social/BeneficiaryProfilePage';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -92,6 +93,14 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Check for profile_id param for standalone page
+  const urlParams = new URLSearchParams(window.location.search);
+  const profileId = urlParams.get('profile_id');
+
+  if (profileId && isLoggedIn) {
+    return <BeneficiaryProfilePage beneficiaryId={profileId} />;
+  }
 
   if (isCheckingAuth) {
     return (

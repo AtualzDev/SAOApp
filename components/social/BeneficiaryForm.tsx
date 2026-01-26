@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { User, Save, X, Info, Phone, CreditCard, Shield, Stethoscope, MapPin, Upload, Calendar, DollarSign, FileText } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { translateError } from '../../services/errorTranslator';
+import SuccessFeedbackModal from '../common/SuccessFeedbackModal';
 
 interface BeneficiaryFormProps {
   onCancel: () => void;
@@ -19,7 +20,7 @@ const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({ onCancel, onSuccess }
   const [dataNascimento, setDataNascimento] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('Ativo');
+  const [status, setStatus] = useState('Pre-Cadastro');
 
   // Endereço
   const [cep, setCep] = useState('');
@@ -41,8 +42,11 @@ const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({ onCancel, onSuccess }
   const [patologiaDescricao, setPatologiaDescricao] = useState('');
 
   // Foto
-  const [fotoUrl, setFotoUrl] = useState('');
+  const [photoUrl, setFotoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdBeneficiaryName, setCreatedBeneficiaryName] = useState('');
 
   // --- Helpers ---
   const formatCPF = (value: string) => {
@@ -151,25 +155,25 @@ const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({ onCancel, onSuccess }
           estado,
           complemento,
           tipo_doenca: tipoDoenca,
-          renda_mensal: rendaMensal,
+          renda_mensal: rendaMensal ? parseFloat(rendaMensal.replace(',', '.')) : null,
           diagnostico,
           data_diagnostico: dataDiagnostico || null,
           cadastro_unico: cadastroUnico,
           numero_nis: numeroNis,
           hospital,
           patologia_descricao: patologiaDescricao,
-          foto_url: fotoUrl,
+          foto_url: photoUrl,
           organization_id
         });
 
       if (error) throw error;
 
-      alert('Assistido cadastrado com sucesso!');
-      if (onSuccess) onSuccess();
-      onCancel();
+      setCreatedBeneficiaryName(nome);
+      setShowSuccessModal(true);
 
     } catch (error: any) {
-      alert('Erro ao salvar assistido: ' + translateError(error.message));
+      console.error(error);
+      alert('Erro ao salvar assistido: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -199,9 +203,9 @@ const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({ onCancel, onSuccess }
         <div className="lg:col-span-1 space-y-6">
           {/* Photo Uploader */}
           <div className="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex flex-col items-center text-center">
-            <div className={`w-32 h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-full flex flex-col items-center justify-center gap-2 group cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all overflow-hidden ${fotoUrl ? 'border-none' : ''} relative`}>
-              {fotoUrl ? (
-                <img src={fotoUrl} alt="Foto" className="w-full h-full object-cover" />
+            <div className={`w-32 h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-full flex flex-col items-center justify-center gap-2 group cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all overflow-hidden ${photoUrl ? 'border-none' : ''} relative`}>
+              {photoUrl ? (
+                <img src={photoUrl} alt="Foto" className="w-full h-full object-cover" />
               ) : (
                 <>
                   <User className="text-slate-300 group-hover:text-blue-400 transition-colors" size={32} />
@@ -303,19 +307,7 @@ const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({ onCancel, onSuccess }
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-400 uppercase">Status Inicial</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all font-medium cursor-pointer"
-                  >
-                    <option value="Ativo">Ativo</option>
-                    <option value="Assistido">Assistido</option>
-                    <option value="Em Triagem">Em Triagem</option>
-                    <option value="Desativado">Desativado</option>
-                  </select>
-                </div>
+
               </div>
             </div>
           )}
@@ -510,6 +502,18 @@ const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({ onCancel, onSuccess }
 
         </div>
       </div>
+      <SuccessFeedbackModal
+        isOpen={showSuccessModal}
+        title="Cadastro Realizado!"
+        subtitle="Novo Assistido"
+        message="O beneficiário foi cadastrado com sucesso no sistema."
+        highlightText={createdBeneficiaryName}
+        onClose={() => {
+          setShowSuccessModal(false);
+          if (onSuccess) onSuccess();
+          onCancel();
+        }}
+      />
     </div>
   );
 };

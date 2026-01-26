@@ -167,7 +167,10 @@ const BeneficiaryTable: React.FC<BeneficiaryTableProps> = ({ onNew }) => {
                     {ben.telefone}
                   </td>
                   <td className="px-4 md:px-8 py-4 text-right">
-                    <button className="inline-flex items-center gap-1.5 text-sm font-bold text-[#3B82F6] hover:underline transition-all">
+                    <button
+                      onClick={() => window.open(`/?profile_id=${ben.id}`, '_blank')}
+                      className="inline-flex items-center gap-1.5 text-sm font-bold text-[#3B82F6] hover:underline transition-all"
+                    >
                       Detalhes <ChevronRight size={16} />
                     </button>
                   </td>

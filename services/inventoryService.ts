@@ -6,11 +6,10 @@ export interface Product {
     nome: string;
     codigo?: string;
     descricao?: string;
-    categoria?: string; // Category ID (UUID)
-    categoria_id?: string;
+    categoria_id?: string; // Category ID (UUID) - Foreign Key
     categoria_nome?: string; // Category name for display
-    categoria_setor?: string; // Category's default sector
-    setor?: string; // Product-specific sector (can override category default)
+    categoria_setor_id?: string; // Category's sector ID
+    setor_id?: string; // Product-specific sector (UUID) - Foreign Key
     unidade_medida?: string;
     estoque_minimo?: number;
     estoque_inicial?: number; // Para criação de produto
@@ -27,7 +26,7 @@ export interface Unit {
 export interface Category {
     id: string;
     nome: string;
-    setor?: string;
+    setor_id?: string; // Sector ID (UUID) - Foreign Key
     descricao?: string;
 }
 
@@ -48,6 +47,7 @@ export interface LaunchData {
     receptionDate?: string;
     provider?: string;
     unit?: string;
+    sectorId?: string;
     notes?: string;
     items: LaunchItem[];
     noteNumber?: string;
@@ -56,6 +56,7 @@ export interface LaunchData {
 export interface Transaction {
     id: string;
     tipo: string;
+    category?: 'entry' | 'exit';
     status: string;
     data_lancamento?: string; // or created_at
     created_at: string;

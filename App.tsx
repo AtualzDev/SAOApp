@@ -7,8 +7,7 @@ import ProductForm from './components/stock/ProductForm';
 import ProductEditModal from './components/stock/ProductEditModal';
 import CategoryTable from './components/stock/CategoryTable';
 import CategoryForm from './components/stock/CategoryForm';
-import SectorTable from './components/stock/SectorTable';
-import SectorForm from './components/stock/SectorForm';
+import SectorsPage from './pages/SectorsPage';
 import ExitTable from './components/stock/ExitTable';
 import ExitForm from './components/stock/ExitForm';
 import BeneficiaryTable from './components/social/BeneficiaryTable';
@@ -248,31 +247,7 @@ const App: React.FC = () => {
     }
 
     if (activeTab === 'setores' || activeTab === 'estoque-setores') {
-      if (isFormOpen) {
-        return <SectorForm onCancel={() => setIsFormOpen(false)} />;
-      }
-      return (
-        <>
-          <header className="sticky top-0 bg-white/80 backdrop-blur-md z-10 p-6 md:px-8 md:py-6 flex items-center justify-between border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hidden md:block"><Map size={20} /></div>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Setores de Estoque</h1>
-                <p className="text-xs text-slate-400 mt-0.5">Gestão de locais físicos e capacidade</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setIsFormOpen(true)}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#1E40AF] hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95 font-bold text-sm"
-              >
-                <Plus size={18} /> Novo Setor
-              </button>
-            </div>
-          </header>
-          <section className="px-6 md:px-8 py-6 space-y-6"><SectorTable /></section>
-        </>
-      );
+      return <SectorsPage />;
     }
 
     if (activeTab === 'saidas' || activeTab === 'estoque-saidas') {

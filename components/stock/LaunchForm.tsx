@@ -3,8 +3,9 @@ import { Pencil, Plus, Trash2, Save, X, FileText, Check } from 'lucide-react';
 import UnitSelectionModal from './UnitSelectionModal';
 import AddCategoryModal from './AddCategoryModal';
 import SupplierSelectionModal from './SupplierSelectionModal';
-import ProductSearchInput from './ProductSearchInput'; // New component
-import AddSimpleModal from './AddSimpleModal'; // New component
+import ProductSearchInput from './ProductSearchInput';
+import AddSimpleModal from './AddSimpleModal';
+import Toast from '../common/Toast';
 import { inventoryService, Product, Transaction } from '../../services/inventoryService';
 
 interface LaunchFormProps {
@@ -20,15 +21,16 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [isSectorModalOpen, setIsSectorModalOpen] = useState(false); // New
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false); // New
+  const [isSectorModalOpen, setIsSectorModalOpen] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   const [selectedUnit, setSelectedUnit] = useState<any>({ nome: initialData?.instituicao_beneficiada || 'CAPEC 2' });
   const [selectedSupplier, setSelectedSupplier] = useState<any>({ nome: initialData?.fornecedor || '' });
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<{ id: string, nome: string }[]>([]); // To store categories
-  const [sectors, setSectors] = useState<string[]>(['Estoque', 'Cozinha', 'Administração']); // Local sectors list
+  const [sectors, setSectors] = useState<{ id: string, nome: string }[]>([]); // Load from database
 
   // Header State
   const [launchType, setLaunchType] = useState(initialData?.tipo || 'Doação');
@@ -46,8 +48,8 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
     quantity: i.quantidade,
     unitPrice: i.valor_unitario,
     unit: i.produto?.unidade_medida || 'UN',
-    category: i.produto?.categoria || '',
-    sector: i.setor || i.produto?.setor || '', // Try item sector then product sector
+    category: i.categoria_id || i.produto?.categoria_id || '', // Use categoria_id
+    sector: i.setor_id || i.produto?.setor_id || '', // Use setor_id
     validity: i.validade ? new Date(i.validade).toISOString().split('T')[0] : '',
   })) || []);
 
@@ -73,13 +75,15 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
   });
 
   useEffect(() => {
-    // Load products and categories
+    // Load products, categories and sectors
     Promise.all([
       inventoryService.listProducts(),
-      inventoryService.listCategories()
-    ]).then(([prodList, catList]) => {
+      inventoryService.listCategories(),
+      inventoryService.listSectors()
+    ]).then(([prodList, catList, sectorList]) => {
       setProducts(prodList);
       setCategories(catList);
+      setSectors(sectorList);
     }).catch(console.error);
   }, []);
 
@@ -99,10 +103,9 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
       // Refresh categories
       const updatedCats = await inventoryService.listCategories();
       setCategories(updatedCats);
-      // Auto select if adding to item line could be improved, but for now just refresh list
-      setIsCategoryModalOpen(false);
+      // Modal fecha automaticamente após sucesso
     } catch (e: any) {
-      alert("Erro ao criar categoria: " + e.message);
+      throw new Error(e.message || "Erro ao criar categoria");
     }
   };
 
@@ -114,7 +117,8 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
       setCurrentItem({
         ...currentItem,
         productId: newProduct.id,
-        category: newProduct.categoria || '',
+        productName: newProduct.nome,
+        category: newProduct.categoria_id || '',
         unit: newProduct.unidade_medida || ''
       });
       setIsProductModalOpen(false);
@@ -123,20 +127,39 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
     }
   };
 
-  const handleAddSector = (newSector: string) => {
-    setSectors([...sectors, newSector]);
-    setCurrentItem({ ...currentItem, sector: newSector }); // Auto select
-    setIsSectorModalOpen(false);
+  const handleAddSector = async (newSectorName: string) => {
+    try {
+      const newSector = await inventoryService.createSector({ name: newSectorName, description: '' });
+      setSectors([...sectors, newSector]);
+      setCurrentItem({ ...currentItem, sector: newSector.id }); // Auto select with ID
+      setIsSectorModalOpen(false);
+    } catch (e: any) {
+      alert("Erro ao criar setor: " + e.message);
+    }
   }
 
   const handleAddItem = () => {
-    // Allow saving if product ID OR product Name exists, plus quantity
-    if ((!currentItem.productId && !currentItem.productName) || !currentItem.quantity) return;
+    // Validação: precisa ter produto (ID ou nome) E quantidade
+    if ((!currentItem.productId && !currentItem.productName.trim())) {
+      setToast({ message: 'Selecione um produto', type: 'warning' });
+      return;
+    }
+
+    if (!currentItem.quantity || currentItem.quantity <= 0) {
+      setToast({ message: 'Quantidade deve ser maior que zero', type: 'warning' });
+      return;
+    }
 
     // Use existing ID if editing, or generate new one
     const newItemId = currentItem.id || Date.now();
 
     setItems([...items, { ...currentItem, id: newItemId }]);
+
+    // Toast de sucesso
+    setToast({
+      message: currentItem.id ? 'Item atualizado com sucesso!' : 'Item adicionado com sucesso!',
+      type: 'success'
+    });
 
     // Reset form
     setCurrentItem({
@@ -170,6 +193,7 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
 
   const removeItem = (id: number) => {
     setItems(items.filter(i => i.id !== id));
+    setToast({ message: 'Item removido com sucesso!', type: 'info' });
   };
 
   const handleSaveLaunch = async () => {
@@ -362,7 +386,8 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
                           ...currentItem,
                           productId: p.id,
                           productName: p.nome,
-                          category: p.categoria || '',
+                          category: p.categoria_id || '', // Use categoria_id
+                          sector: p.setor_id || '',        // Use setor_id
                           unit: p.unidade_medida || ''
                         });
                       }}
@@ -390,7 +415,7 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
                         onChange={(e) => setCurrentItem({ ...currentItem, sector: e.target.value })}
                       >
                         <option value="">Setor...</option>
-                        {sectors.map(s => <option key={s} value={s}>{s}</option>)}
+                        {sectors.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
                       </select>
                       <button
                         onClick={() => setIsSectorModalOpen(true)}
@@ -410,7 +435,7 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
                         onChange={(e) => setCurrentItem({ ...currentItem, category: e.target.value })}
                       >
                         <option value="">Cat...</option>
-                        {categories.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                       </select>
                       <button
                         onClick={() => setIsCategoryModalOpen(true)}
@@ -475,8 +500,8 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
                     <td className="px-4 py-3 text-center">{index + 1}</td>
                     <td className="px-4 py-3">{products.find(p => p.id === item.productId)?.nome || item.productName || 'Item Desconhecido'}</td>
                     <td className="px-4 py-3">{item.validity && new Date(item.validity).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-slate-500">{item.sector}</td>
-                    <td className="px-4 py-3 text-slate-500">{item.category || products.find(p => p.id === item.productId)?.categoria || '-'}</td>
+                    <td className="px-4 py-3 text-slate-500">{sectors.find(s => s.id === item.sector)?.nome || '-'}</td>
+                    <td className="px-4 py-3 text-slate-500">{categories.find(c => c.id === item.category)?.nome || '-'}</td>
                     <td className="px-4 py-3 font-bold">{item.quantity}</td>
                     <td className="px-4 py-3 text-slate-500">{item.unit}</td>
                     <td className="px-4 py-3">{item.unitPrice}</td>
@@ -605,6 +630,15 @@ const LaunchForm: React.FC<LaunchFormProps> = ({ onCancel, initialData }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
 
     </div>

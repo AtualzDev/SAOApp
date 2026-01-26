@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, Filter, Eye, Pencil, Trash2, Map, Users, Box } from 'lucide-react';
+import { inventoryService } from '../../services/inventoryService';
 
 export interface InventorySector {
   id: string;
@@ -11,24 +12,40 @@ export interface InventorySector {
   status: 'Ativo' | 'Inativo' | 'Em Manutenção';
 }
 
-const MOCK_SECTORS: InventorySector[] = [
-  { id: '1', nome: 'Cozinha Central', responsavel: 'Maria Silva', localizacao: 'Bloco A - Térreo', totalItens: 156, status: 'Ativo' },
-  { id: '2', nome: 'Almoxarifado Geral', responsavel: 'Ricardo Santos', localizacao: 'Bloco B - Galpão 1', totalItens: 1240, status: 'Ativo' },
-  { id: '3', nome: 'Bazar Social', responsavel: 'Ana Oliveira', localizacao: 'Unidade Centro', totalItens: 450, status: 'Ativo' },
-  { id: '4', nome: 'Depósito de Limpeza', responsavel: 'Carlos Souza', localizacao: 'Bloco A - Subsolo', totalItens: 89, status: 'Em Manutenção' },
-  { id: '5', nome: 'Farmácia Interna', responsavel: 'Dra. Fernanda', localizacao: 'Bloco C - Sala 4', totalItens: 210, status: 'Ativo' },
-];
-
 const SectorTable: React.FC = () => {
+  // Estados para dados
+  const [sectors, setSectors] = useState<InventorySector[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Estados para paginação e busca
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;
   const [searchTerm, setSearchTerm] = React.useState('');
 
+  // Buscar setores do backend
+  useEffect(() => {
+    const fetchSectors = async () => {
+      try {
+        setLoading(true);
+        const data = await inventoryService.listSectors();
+        setSectors(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching sectors:', err);
+        setError('Erro ao carregar setores. Tente novamente.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSectors();
+  }, []);
+
   // Filtragem
-  const filteredSectors = MOCK_SECTORS.filter(sector =>
+  const filteredSectors = sectors.filter(sector =>
     sector.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sector.responsavel.toLowerCase().includes(searchTerm.toLowerCase())
+    (sector.responsavel && sector.responsavel.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Lógica de Paginação
@@ -73,110 +90,142 @@ const SectorTable: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">SETOR / ID</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">LOCALIZAÇÃO</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">RESPONSÁVEL</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">CAPACIDADE UTILIZADA</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">STATUS</th>
-              <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">AÇÕES</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {currentItems.map((sector) => (
-              <tr key={sector.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                      <Map size={18} />
-                    </div>
-                    <div>
-                      <span className="text-sm font-bold text-slate-700 block">{sector.nome}</span>
-                      <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">ID: #SET-00{sector.id}</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <Box size={14} className="text-slate-300" />
-                    {sector.localizacao}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-500 font-bold border border-slate-200">
-                      {sector.responsavel.substring(0, 2).toUpperCase()}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-600">{sector.responsavel}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-                      <span>{sector.totalItens} Itens</span>
-                      <span>{Math.round((sector.totalItens / 2000) * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-indigo-500 h-full rounded-full"
-                        style={{ width: `${Math.min((sector.totalItens / 2000) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusColor(sector.status)}`}>
-                    {sector.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-center gap-1">
-                    <button className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Eye size={16} /></button>
-                    <button className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"><Pencil size={16} /></button>
-                    <button className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
-                  </div>
-                </td>
+      {/* Loading State */}
+      {loading && (
+        <div className="p-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <p className="mt-4 text-sm text-slate-500">Carregando setores...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="p-12 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mb-4">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <p className="text-sm text-red-600 font-medium">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
+      {/* Table - Only show when not loading and no error */}
+      {!loading && !error && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">SETOR / ID</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">LOCALIZAÇÃO</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">RESPONSÁVEL</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">CAPACIDADE UTILIZADA</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">STATUS</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">AÇÕES</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {currentItems.map((sector) => (
+                <tr key={sector.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                        <Map size={18} />
+                      </div>
+                      <div>
+                        <span className="text-sm font-bold text-slate-700 block">{sector.nome}</span>
+                        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">ID: #SET-00{sector.id}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                      <Box size={14} className="text-slate-300" />
+                      {sector.localizacao || 'Não definido'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-500 font-bold border border-slate-200">
+                        {sector.responsavel ? sector.responsavel.substring(0, 2).toUpperCase() : '--'}
+                      </div>
+                      <span className="text-xs font-semibold text-slate-600">{sector.responsavel || 'Não atribuído'}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                        <span>{sector.totalItens} Itens</span>
+                        <span>{Math.round((sector.totalItens / 2000) * 100)}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-indigo-500 h-full rounded-full"
+                          style={{ width: `${Math.min((sector.totalItens / 2000) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusColor(sector.status)}`}>
+                      {sector.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-1">
+                      <button className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"><Eye size={16} /></button>
+                      <button className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"><Pencil size={16} /></button>
+                      <button className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
-        <p className="text-xs text-slate-400 font-medium">Organização por setores facilita a contagem e auditoria do estoque.</p>
+      {/* Footer - Always show when not loading */}
+      {!loading && (
+        <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
+          <p className="text-xs text-slate-400 font-medium">Organização por setores facilita a contagem e auditoria do estoque.</p>
 
-        {/* Controles de Paginação (Visível apenas se > 1 página, ou seja > 10 itens) */}
-        {totalPages > 1 && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-white disabled:opacity-50 transition-colors shadow-sm"
-            >
-              Anterior
-            </button>
-            <span className="text-xs font-bold text-slate-600">
-              {currentPage} / {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-white disabled:opacity-50 transition-colors shadow-sm"
-            >
-              Próximo
-            </button>
-          </div>
-        )}
-        {/* Se não tiver paginação, mantém o botão original ou remove? Vou manter o botão original se não tiver paginação para não ficar vazio, mas o pedido era "paginação". Se <= 10, não precisa de controles. */}
-        {totalPages <= 1 && (
-          <div className="flex items-center gap-2">
-            <button className="px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-500 hover:bg-white transition-colors shadow-sm">Imprimir Etiquetas QR</button>
-          </div>
-        )}
-      </div>
+          {/* Controles de Paginação (Visível apenas se > 1 página, ou seja > 10 itens) */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-white disabled:opacity-50 transition-colors shadow-sm"
+              >
+                Anterior
+              </button>
+              <span className="text-xs font-bold text-slate-600">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-white disabled:opacity-50 transition-colors shadow-sm"
+              >
+                Próximo
+              </button>
+            </div>
+          )}
+          {/* Se não tiver paginação, mantém o botão original ou remove? Vou manter o botão original se não tiver paginação para não ficar vazio, mas o pedido era "paginação". Se <= 10, não precisa de controles. */}
+          {totalPages <= 1 && (
+            <div className="flex items-center gap-2">
+              <button className="px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-500 hover:bg-white transition-colors shadow-sm">Imprimir Etiquetas QR</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

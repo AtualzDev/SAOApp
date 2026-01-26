@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Package } from 'lucide-react';
 import { inventoryService, Product, Category } from '../../services/inventoryService';
 
+interface Sector {
+    id: string;
+    nome: string;
+}
+
 interface ProductEditModalProps {
     product: Product | null;
     onClose: () => void;
@@ -10,33 +15,45 @@ interface ProductEditModalProps {
 
 const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onClose, onSave }) => {
     const [categories, setCategories] = useState<Category[]>([]);
+    const [sectors, setSectors] = useState<Sector[]>([]);
     const [formData, setFormData] = useState({
         nome: '',
         codigo: '',
         categoria_id: '',
-        setor: '',
+        setor_id: '',
         unidade_medida: 'UN',
         estoque_minimo: 0,
         valor_referencia: 0,
         descricao: ''
     });
     const [loading, setLoading] = useState(false);
+    const [initializing, setInitializing] = useState(true);
 
     useEffect(() => {
-        loadCategories();
-        if (product) {
-            setFormData({
-                nome: product.nome || '',
-                codigo: product.codigo || '',
-                // Fix: Use product.categoria (the ID field) for categoria_id
-                categoria_id: product.categoria || product.categoria_id || '',
-                setor: product.setor || '',
-                unidade_medida: product.unidade_medida || 'UN',
-                estoque_minimo: product.estoque_minimo || 0,
-                valor_referencia: product.valor_referencia || 0,
-                descricao: product.descricao || ''
-            });
-        }
+        const initializeForm = async () => {
+            setInitializing(true);
+
+            // Carregar categorias e setores primeiro
+            await Promise.all([loadCategories(), loadSectors()]);
+
+            // Depois inicializar o formulário com os dados do produto
+            if (product) {
+                setFormData({
+                    nome: product.nome || '',
+                    codigo: product.codigo || '',
+                    categoria_id: product.categoria_id || '',
+                    setor_id: product.setor_id || '',
+                    unidade_medida: product.unidade_medida || 'UN',
+                    estoque_minimo: product.estoque_minimo || 0,
+                    valor_referencia: product.valor_referencia || 0,
+                    descricao: product.descricao || ''
+                });
+            }
+
+            setInitializing(false);
+        };
+
+        initializeForm();
     }, [product]);
 
     const loadCategories = async () => {
@@ -45,6 +62,15 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onClose, o
             setCategories(data);
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
+        }
+    };
+
+    const loadSectors = async () => {
+        try {
+            const data = await inventoryService.listSectors();
+            setSectors(data);
+        } catch (error) {
+            console.error('Erro ao carregar setores:', error);
         }
     };
 
@@ -59,12 +85,26 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onClose, o
         try {
             setLoading(true);
 
+            // Preparar dados para envio (renomear setor_id para setor e categoria_id para categoria)
+            const dataToSend = {
+                nome: formData.nome,
+                codigo: formData.codigo,
+                categoria: formData.categoria_id, // Backend espera 'categoria'
+                setor: formData.setor_id,         // Backend espera 'setor'
+                unidade_medida: formData.unidade_medida,
+                estoque_minimo: formData.estoque_minimo,
+                valor_referencia: formData.valor_referencia,
+                descricao: formData.descricao
+            };
+
+            console.log('Dados enviados:', dataToSend);
+
             if (product?.id) {
-                console.log('Atualizando produto:', product.id, formData);
-                await inventoryService.updateProduct(product.id, formData);
+                console.log('Atualizando produto:', product.id);
+                await inventoryService.updateProduct(product.id, dataToSend);
             } else {
-                console.log('Criando novo produto:', formData);
-                await inventoryService.createProduct(formData);
+                console.log('Criando novo produto');
+                await inventoryService.createProduct(dataToSend);
             }
 
             onSave();
@@ -171,18 +211,15 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({ product, onClose, o
                                 Setor
                             </label>
                             <select
-                                name="setor"
-                                value={formData.setor}
+                                name="setor_id"
+                                value={formData.setor_id}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
                             >
                                 <option value="">Selecione...</option>
-                                <option value="Alimentação">Alimentação</option>
-                                <option value="Limpeza">Limpeza</option>
-                                <option value="Escritório">Escritório</option>
-                                <option value="Higiene">Higiene</option>
-                                <option value="Vestuário">Vestuário</option>
-                                <option value="Outros">Outros</option>
+                                {sectors.map(sector => (
+                                    <option key={sector.id} value={sector.id}>{sector.nome}</option>
+                                ))}
                             </select>
                         </div>
 

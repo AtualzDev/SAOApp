@@ -30,7 +30,7 @@ const BeneficiaryTable: React.FC<BeneficiaryTableProps> = ({ onNew }) => {
     try {
       setLoading(true);
       let query = supabase
-        .from('ASSISTIDOS')
+        .from('assistidos')
         .select('*')
         .order('nome', { ascending: true });
 

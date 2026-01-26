@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  MapPin, 
-  BarChart3, 
-  Package, 
-  HeartHandshake, 
-  ShieldCheck, 
-  Bell, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  MapPin,
+  BarChart3,
+  Package,
+  HeartHandshake,
+  ShieldCheck,
+  Bell,
+  Settings,
   LogOut,
   PlusCircle,
   PackagePlus,
@@ -44,14 +44,15 @@ export const MOCK_LAUNCHES: Launch[] = [
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'inicio', label: 'Início', icon: <LayoutDashboard size={20} />, path: '/' },
+  { id: 'assistidos', label: 'Assistidos', icon: <Users size={20} />, path: '/assistidos' },
   { id: 'agenda', label: 'Agenda', icon: <Calendar size={20} />, path: '/agenda' },
   { id: 'rotas', label: 'Rotas de Atendimento', icon: <MapPin size={20} />, path: '/rotas' },
   { id: 'financeiro', label: 'Financeiro', icon: <Wallet size={20} />, path: '/financeiro' },
   { id: 'relatorios', label: 'Relatórios', icon: <BarChart3 size={20} />, path: '/relatorios' },
-  { 
-    id: 'estoque', 
-    label: 'Estoque', 
-    icon: <Package size={20} />, 
+  {
+    id: 'estoque',
+    label: 'Estoque',
+    icon: <Package size={20} />,
     path: '/estoque',
     children: [
       { id: 'estoque-visao-geral', label: 'Visão Geral', icon: <LayoutDashboard size={18} />, path: '/estoque/visao-geral' },
@@ -60,17 +61,17 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
       { id: 'saidas', label: 'Saídas', icon: <PackageMinus size={18} />, path: '/estoque/saidas' },
       { id: 'categorias', label: 'Categorias', icon: <ClipboardList size={18} />, path: '/estoque/categorias' },
       { id: 'setores', label: 'Setores', icon: <Map size={18} />, path: '/estoque/setores' },
-      { id: 'auditoria', label: 'Auditoria', icon: <ShieldCheck size={18} />, path: '/estoque/auditoria' },
+      // { id: 'auditoria', label: 'Auditoria', icon: <ShieldCheck size={18} />, path: '/estoque/auditoria' },
     ]
   },
-  { 
-    id: 'assistencia', 
-    label: 'Assistência Social', 
-    icon: <HeartHandshake size={20} />, 
+  {
+    id: 'assistencia',
+    label: 'Assistência Social',
+    icon: <HeartHandshake size={20} />,
     path: '/assistencia',
     children: [
       { id: 'soc-visao-geral', label: 'Visão Geral', icon: <LayoutDashboard size={18} />, path: '/assistencia/visao-geral' },
-      { id: 'assistidos', label: 'Assistidos', icon: <Users size={18} />, path: '/assistidos' },
+      // { id: 'assistidos', label: 'Assistidos', icon: <Users size={18} />, path: '/assistidos' },
       { id: 'soc-historico', label: 'Histórico', icon: <History size={18} />, path: '/assistencia/historico' },
       { id: 'soc-solicitacoes', label: 'Solicitacoes', icon: <ClipboardList size={18} />, path: '/assistencia/solicitacoes' },
       { id: 'soc-acompanhamento', label: 'Acompanhamento', icon: <Activity size={18} />, path: '/assistencia/acompanhamento' },

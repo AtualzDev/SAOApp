@@ -1,148 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Plus, Pencil, Trash2, FolderOpen, Tag } from 'lucide-react';
-import { inventoryService, Category } from '../../services/inventoryService';
-import DeleteConfirmModal from './DeleteConfirmModal';
-
-interface CategoryEditModalProps {
-    category: Category | null;
-    onClose: () => void;
-    onSave: () => void;
-}
-
-const CategoryEditModal: React.FC<CategoryEditModalProps> = ({ category, onClose, onSave }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        sector: '',
-        description: ''
-    });
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        if (category) {
-            setFormData({
-                name: category.nome || '',
-                sector: category.setor || '',
-                description: category.descricao || ''
-            });
-        }
-    }, [category]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!formData.name.trim()) {
-            alert('Nome da categoria é obrigatório');
-            return;
-        }
-
-        try {
-            setLoading(true);
-
-            if (category?.id) {
-                await inventoryService.updateCategory(category.id, formData);
-            } else {
-                await inventoryService.createCategory(formData);
-            }
-
-            onSave();
-            onClose();
-        } catch (error) {
-            console.error('Erro ao salvar categoria:', error);
-            alert('Erro ao salvar categoria: ' + (error as Error).message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (!category && category !== null) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200">
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                            <FolderOpen className="text-white" size={24} />
-                        </div>
-                        <h2 className="text-xl font-bold text-white">
-                            {category ? 'Editar Categoria' : 'Nova Categoria'}
-                        </h2>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
-                        <span className="text-white text-2xl">×</span>
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">
-                                Nome da Categoria *
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                                placeholder="Ex: Alimentos"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">
-                                Setor
-                            </label>
-                            <select
-                                value={formData.sector}
-                                onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
-                            >
-                                <option value="">Selecione...</option>
-                                <option value="Alimentação">Alimentação</option>
-                                <option value="Limpeza">Limpeza</option>
-                                <option value="Escritório">Escritório</option>
-                                <option value="Higiene">Higiene</option>
-                                <option value="Vestuário">Vestuário</option>
-                                <option value="Outros">Outros</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">
-                                Descrição
-                            </label>
-                            <textarea
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                rows={3}
-                                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all resize-none"
-                                placeholder="Descrição da categoria..."
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 mt-6">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 px-5 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-1 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-sm font-bold hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50"
-                        >
-                            {loading ? 'Salvando...' : 'Salvar'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
+import { inventoryService, Category } from '../services/inventoryService';
+import DeleteConfirmModal from '../components/stock/DeleteConfirmModal';
+import AddCategoryModal from '../components/stock/AddCategoryModal';
 
 const CategoriesPage: React.FC = () => {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -199,9 +59,26 @@ const CategoriesPage: React.FC = () => {
         }
     };
 
+    const handleSaveCategory = async (data: any) => {
+        try {
+            if (editModal.category?.id) {
+                // Editar categoria existente
+                await inventoryService.updateCategory(editModal.category.id, data);
+            } else {
+                // Criar nova categoria
+                await inventoryService.createCategory(data);
+            }
+
+            // Recarregar lista
+            await loadCategories();
+        } catch (error: any) {
+            throw new Error(error.message || 'Erro ao salvar categoria');
+        }
+    };
+
     const filteredCategories = categories.filter(c =>
         c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.setor && c.setor.toLowerCase().includes(searchTerm.toLowerCase()))
+        (c.setor_id && c.setor_id.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -251,6 +128,7 @@ const CategoriesPage: React.FC = () => {
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Nome</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Cor</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Setor</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Descrição</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Ações</th>
@@ -259,13 +137,13 @@ const CategoriesPage: React.FC = () => {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
                                         Carregando categorias...
                                     </td>
                                 </tr>
                             ) : filteredCategories.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
                                         Nenhuma categoria encontrada
                                     </td>
                                 </tr>
@@ -279,8 +157,15 @@ const CategoriesPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
+                                            <div
+                                                className="w-8 h-8 rounded-lg border-2 border-slate-200"
+                                                style={{ backgroundColor: (category as any).cor || '#3B82F6' }}
+                                                title={(category as any).cor || '#3B82F6'}
+                                            />
+                                        </td>
+                                        <td className="px-6 py-4">
                                             <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                                                {category.setor || '-'}
+                                                {category.setor_id || '-'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
@@ -313,10 +198,11 @@ const CategoriesPage: React.FC = () => {
             </div>
 
             {editModal.isOpen && (
-                <CategoryEditModal
+                <AddCategoryModal
+                    isOpen={editModal.isOpen}
                     category={editModal.category}
                     onClose={() => setEditModal({ isOpen: false, category: null })}
-                    onSave={loadCategories}
+                    onSave={handleSaveCategory}
                 />
             )}
 

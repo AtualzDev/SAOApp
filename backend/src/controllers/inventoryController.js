@@ -34,14 +34,39 @@ const inventoryController = {
     // --- Sectors (Setores) ---
     async listSectors(req, res) {
         try {
-            const { data, error } = await supabase
+            // Buscar setores
+            const { data: sectors, error: sectorsError } = await supabase
                 .from('setores')
                 .select('*')
                 .eq('deletado', false)
                 .order('nome');
-            if (error) throw error;
-            res.json(data);
+
+            if (sectorsError) throw sectorsError;
+
+            // Para cada setor, contar quantos produtos estão associados
+            const enrichedSectors = await Promise.all(
+                sectors.map(async (sector) => {
+                    // Contar produtos que têm este setor
+                    const { count, error: countError } = await supabase
+                        .from('produtos')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('setor_id', sector.id)
+                        .eq('deletado', false);
+
+                    if (countError) {
+                        console.error('Error counting products for sector:', sector.id, countError);
+                    }
+
+                    return {
+                        ...sector,
+                        totalItens: count || 0
+                    };
+                })
+            );
+
+            res.json(enrichedSectors);
         } catch (error) {
+            console.error('Error listing sectors:', error);
             res.status(500).json({ error: error.message });
         }
     },
@@ -96,10 +121,10 @@ const inventoryController = {
         const { id } = req.params;
 
         try {
-            // Soft delete
+            // Soft delete - marca como deletado
             const { data, error } = await supabase
                 .from('setores')
-                .update({ deletado: true })
+                .update({ deletado: 'yes' })
                 .eq('id', id)
                 .select();
 
@@ -132,14 +157,15 @@ const inventoryController = {
     },
 
     async createCategory(req, res) {
-        const { name, sector, description } = req.body;
+        const { name, sector, description, color } = req.body;
         try {
             const { data, error } = await supabase
                 .from('categorias')
                 .insert([{
                     nome: name,
-                    setor: sector,
+                    setor_id: sector,
                     descricao: description,
+                    cor: color || '#3B82F6', // Cor padrão azul
                     deletado: 'no'
                 }])
                 .select();
@@ -152,13 +178,14 @@ const inventoryController = {
 
     async updateCategory(req, res) {
         const { id } = req.params;
-        const { name, sector, description } = req.body;
+        const { name, sector, description, color } = req.body;
 
         try {
             const updateData = {};
             if (name !== undefined) updateData.nome = name;
-            if (sector !== undefined) updateData.setor = sector;
+            if (sector !== undefined) updateData.setor_id = sector;
             if (description !== undefined) updateData.descricao = description;
+            if (color !== undefined) updateData.cor = color;
 
             const { data, error } = await supabase
                 .from('categorias')
@@ -262,11 +289,11 @@ const inventoryController = {
 
             // Transform data to include categoria_nome at root level for easier access
             const transformedData = products.map(product => {
-                const category = product.categoria ? categoryMap[product.categoria] : null;
+                const category = product.categoria_id ? categoryMap[product.categoria_id] : null;
                 return {
                     ...product,
                     categoria_nome: category?.nome || null,
-                    categoria_setor: category?.setor || null
+                    categoria_setor_id: category?.setor_id || null
                 };
             });
 
@@ -285,8 +312,8 @@ const inventoryController = {
                 .insert([{
                     nome,
                     descricao,
-                    categoria,
-                    setor,
+                    categoria_id: categoria,
+                    setor_id: setor,
                     unidade_medida,
                     estoque_minimo,
                     estoque_atual: estoque_inicial || 0,  // Estoque atual inicia com o valor do estoque inicial
@@ -317,9 +344,9 @@ const inventoryController = {
             if (nome !== undefined) updateData.nome = nome;
             if (descricao !== undefined) updateData.descricao = descricao;
             // Use categoria_id se fornecido, senão use categoria
-            if (categoria_id !== undefined) updateData.categoria = categoria_id;
-            else if (categoria !== undefined) updateData.categoria = categoria;
-            if (setor !== undefined) updateData.setor = setor;
+            if (categoria_id !== undefined) updateData.categoria_id = categoria_id;
+            else if (categoria !== undefined) updateData.categoria_id = categoria;
+            if (setor !== undefined) updateData.setor_id = setor;
             if (unidade_medida !== undefined) updateData.unidade_medida = unidade_medida;
             if (estoque_minimo !== undefined) updateData.estoque_minimo = estoque_minimo;
             if (valor_referencia !== undefined) updateData.valor_referencia = valor_referencia;
@@ -382,6 +409,11 @@ const inventoryController = {
             return res.status(400).json({ error: 'Launch must have at least one item' });
         }
 
+        const EXIT_TYPES = ['Uso Interno', 'Perda', 'Troca', 'Doação (Saída)', 'Saída', 'Venda'];
+        if (EXIT_TYPES.includes(type)) {
+            return inventoryController.createExit(req, res);
+        }
+
         try {
             // 1. Create Header
             const headerData = {
@@ -413,8 +445,8 @@ const inventoryController = {
                 quantidade: Number(item.quantity),
                 valor_unitario: Number(item.unitPrice),
                 validade: item.validity || null,
-                setor: item.sector || null,         // New fields
-                categoria: item.category || null,   // New fields
+                setor_id: item.sector || null,         // New fields
+                categoria_id: item.category || null,   // New fields
                 unidade_medida: item.unit || null   // New fields
             }));
 
@@ -428,13 +460,18 @@ const inventoryController = {
             }
 
             // 3. Update Stock for each item
+            const INPUT_TYPES = ['Compra', 'Doação', 'Doação Recebida', 'Entrada', 'Devolução'];
+            // Output types are implicitly anything else, but for clarity: ['Saída', 'Venda', 'Perda', 'Uso Interno', 'Troca', 'Doação Enviada']
+
             for (const item of items) {
                 // Fetch current
                 const { data: prod } = await supabase.from('produtos').select('estoque_atual').eq('id', item.productId).single();
                 if (prod) {
                     let newStock = prod.estoque_atual;
-                    if (type === 'Doação' || type === 'Compra') { // Entradas
+                    if (INPUT_TYPES.includes(type)) { // Entradas
                         newStock += Number(item.quantity);
+                    } else { // Saídas (Perda, Uso Interno, Troca, etc)
+                        newStock -= Number(item.quantity);
                     }
 
                     await supabase.from('produtos').update({ estoque_atual: newStock }).eq('id', item.productId);
@@ -461,14 +498,17 @@ const inventoryController = {
             const { data: oldItems } = await supabase.from('lancamentos_itens').select('*').eq('lancamento_id', id);
 
             // 2. Revert Stock (Undo previous operation)
+            // 2. Revert Stock (Undo previous operation)
+            const INPUT_TYPES = ['Compra', 'Doação', 'Doação Recebida', 'Entrada', 'Devolução'];
+
             if (oldItems) {
                 for (const oldItem of oldItems) {
                     if (oldItem.produto_id) {
                         const { data: prod } = await supabase.from('produtos').select('estoque_atual').eq('id', oldItem.produto_id).single();
                         if (prod) {
                             let revertStock = prod.estoque_atual;
-                            // If it was input, subtract. If output, add.
-                            if (oldHeader.tipo === 'Doação' || oldHeader.tipo === 'Compra' || oldHeader.tipo === 'Entrada') {
+                            // If it was input, subtract to revert. If output, add to revert.
+                            if (INPUT_TYPES.includes(oldHeader.tipo)) {
                                 revertStock -= oldItem.quantidade;
                             } else {
                                 revertStock += oldItem.quantidade;
@@ -505,8 +545,8 @@ const inventoryController = {
                 quantidade: Number(item.quantity),
                 valor_unitario: Number(item.unitPrice),
                 validade: item.validity || null,
-                setor: item.sector || null,
-                categoria: item.category || null,
+                setor_id: item.sector || null,
+                categoria_id: item.category || null,
                 unidade_medida: item.unit || null
             }));
 
@@ -519,7 +559,7 @@ const inventoryController = {
                     const { data: prod } = await supabase.from('produtos').select('estoque_atual').eq('id', item.productId).single();
                     if (prod) {
                         let newStock = prod.estoque_atual;
-                        if (type === 'Doação' || type === 'Compra' || type === 'Entrada') {
+                        if (INPUT_TYPES.includes(type)) {
                             newStock += Number(item.quantity);
                         } else {
                             newStock -= Number(item.quantity);
@@ -536,15 +576,119 @@ const inventoryController = {
             res.status(500).json({ error: error.message });
         }
     },
+    async createExit(req, res) {
+        const { type, status, receptionDate, provider, unit, notes, items, sectorId } = req.body;
+        // provider maps to 'solicitante_ou_assistido'
+        // unit maps to 'destino_local' (Legacy/Fallback)
+        // sectorId maps to 'setor_id'
+
+        try {
+            // Map frontend specific types to DB types if necessary
+            let dbType = type;
+            if (type === 'Doação (Saída)') dbType = 'Doação';
+
+            // 1. Create Header
+            const headerData = {
+                tipo: dbType,
+                status: status || 'Concluído',
+                data_saida: receptionDate || new Date(),
+                solicitante_ou_assistido: provider,
+                destino_local: unit, // Still saving name for quick display
+                setor_id: sectorId || null, // Saving the relationship
+                observacoes: notes
+            };
+
+            const { data: exitData, error: exitError } = await supabase
+                .from('saidas_estoque')
+                .insert([headerData])
+                .select()
+                .single();
+
+            if (exitError) throw exitError;
+
+            const exitId = exitData.id;
+
+            // 2. Create Items
+            const preparedItems = items.map(item => ({
+                saida_id: exitId,
+                produto_id: item.productId,
+                quantidade: Number(item.quantity),
+                unidade_medida: item.unit
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('saidas_estoque_itens')
+                .insert(preparedItems);
+
+            if (itemsError) throw itemsError;
+
+            // 3. Update Stock (Subtract)
+            for (const item of items) {
+                const { data: prod } = await supabase.from('produtos').select('estoque_atual').eq('id', item.productId).single();
+                if (prod) {
+                    const newStock = prod.estoque_atual - Number(item.quantity);
+                    await supabase.from('produtos').update({ estoque_atual: newStock }).eq('id', item.productId);
+                }
+            }
+
+            res.status(201).json({ message: 'Exit created successfully', id: exitId });
+
+        } catch (error) {
+            console.error('Error creating exit:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     async listTransactions(req, res) {
         try {
-            const { data, error } = await supabase
+            // 1. Fetch Entries (Lancamentos)
+            const { data: entries, error: entriesError } = await supabase
                 .from('lancamentos')
                 .select('*, items:lancamentos_itens(*, produto:produtos(nome))')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            res.json(data);
+            if (entriesError) throw entriesError;
+
+            // 2. Fetch Exits (Saidas)
+            const { data: exits, error: exitsError } = await supabase
+                .from('saidas_estoque')
+                .select('*, items:saidas_estoque_itens(*, produto:produtos(nome))')
+                .order('created_at', { ascending: false });
+
+            if (exitsError) throw exitsError;
+
+            // 3. Normalize and Merge
+            const normalizedEntries = entries.map(e => ({
+                ...e,
+                category: 'entry',
+                // Map fields to a common interface if needed, but keeping original fields is fine as long as frontend handles it
+                data_lancamento: e.data_recebimento || e.created_at
+            }));
+
+            const normalizedExits = exits.map(e => ({
+                id: e.id,
+                tipo: e.tipo,
+                status: e.status,
+                created_at: e.created_at,
+                data_recebimento: e.data_saida, // Mapping for frontend compatibility
+                fornecedor: e.solicitante_ou_assistido, // Mapping
+                instituicao_beneficiada: e.destino_local, // Mapping
+                observacoes: e.observacoes,
+                items: e.items.map(i => ({
+                    ...i,
+                    quantidade: i.quantidade,
+                    valor_unitario: 0, // Exits don't usually have unit price in this simple model
+                    produto: i.produto
+                })),
+                category: 'exit'
+            }));
+
+            const allTransactions = [...normalizedEntries, ...normalizedExits];
+
+            // Sort by date desc
+            allTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            res.json(allTransactions);
         } catch (error) {
             console.error("List transactions error:", error);
             res.status(500).json({ error: error.message });

@@ -135,7 +135,7 @@ const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({ onCancel, onSuccess }
       }
 
       const { error } = await supabase
-        .from('ASSISTIDOS')
+        .from('assistidos')
         .insert({
           nome,
           cpf,

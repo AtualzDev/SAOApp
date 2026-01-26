@@ -16,13 +16,14 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel, initialData, onSu
 
   const [formData, setFormData] = useState({
     nome: '',
-    setor: '',
-    descricao: ''
+    setor_id: '',
+    descricao: '',
+    cor: '#3B82F6' // Cor padrão
   });
 
   const colors = [
-    'bg-amber-500', 'bg-orange-500', 'bg-rose-500', 'bg-pink-500',
-    'bg-indigo-500', 'bg-blue-500', 'bg-cyan-500', 'bg-emerald-500'
+    '#F59E0B', '#F97316', '#EF4444', '#EC4899',
+    '#6366F1', '#3B82F6', '#06B6D4', '#10B981'
   ];
 
   useEffect(() => {
@@ -30,10 +31,14 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel, initialData, onSu
     if (initialData) {
       setFormData({
         nome: initialData.nome,
-        setor: initialData.setor || '',
-        descricao: initialData.descricao || ''
+        setor_id: initialData.setor_id || '',
+        descricao: initialData.descricao || '',
+        cor: (initialData as any).cor || '#3B82F6'
       });
-      // Tenta inferir cor se salvássemos no banco, mas por enquanto é visual local
+      // Atualizar cor selecionada se tiver
+      if ((initialData as any).cor) {
+        setSelectedColor((initialData as any).cor);
+      }
     }
   }, [initialData]);
 
@@ -57,8 +62,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel, initialData, onSu
       // Mapear para o formato esperado pelo backend (inglês)
       const payload: any = {
         name: formData.nome,
-        sector: formData.setor,
-        description: formData.descricao
+        sector: formData.setor_id, // Enviar ID do setor
+        description: formData.descricao,
+        color: selectedColor // Enviar cor selecionada
       };
 
       if (initialData) {
@@ -122,24 +128,14 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel, initialData, onSu
               <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-slate-400 uppercase">Setor de Atuação</label>
                 <select
-                  value={formData.setor}
-                  onChange={(e) => setFormData({ ...formData, setor: e.target.value })}
+                  value={formData.setor_id}
+                  onChange={(e) => setFormData({ ...formData, setor_id: e.target.value })}
                   className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-400 transition-all cursor-pointer font-medium"
                 >
                   <option value="">Selecione um setor...</option>
                   {sectors.map(sector => (
-                    <option key={sector.id} value={sector.nome}>{sector.nome}</option>
+                    <option key={sector.id} value={sector.id}>{sector.nome}</option>
                   ))}
-                  {/* Fallback caso não tenha setores carregados ainda */}
-                  {sectors.length === 0 && (
-                    <>
-                      <option value="Cozinha Central">Cozinha Central</option>
-                      <option value="Administrativo">Administrativo</option>
-                      <option value="Bazar Social">Bazar Social</option>
-                      <option value="Enfermaria">Enfermaria</option>
-                      <option value="Limpeza e Higiene">Limpeza e Higiene</option>
-                    </>
-                  )}
                 </select>
               </div>
 
@@ -165,7 +161,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel, initialData, onSu
             </h3>
 
             <div className="flex flex-col items-center gap-4 py-4">
-              <div className={`w-16 h-16 ${selectedColor} rounded-2xl flex items-center justify-center text-white shadow-lg`}>
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg"
+                style={{ backgroundColor: selectedColor }}
+              >
                 <LayoutGrid size={32} />
               </div>
               <p className="text-[10px] text-slate-400 font-bold uppercase text-center leading-relaxed">
@@ -177,9 +176,11 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onCancel, initialData, onSu
               {colors.map((color) => (
                 <button
                   key={color}
+                  type="button"
                   onClick={() => setSelectedColor(color)}
-                  className={`w-full h-8 rounded-lg transition-all ${color} ${selectedColor === color ? 'ring-2 ring-offset-2 ring-slate-400' : 'hover:scale-105'
+                  className={`w-full h-8 rounded-lg transition-all ${selectedColor === color ? 'ring-2 ring-offset-2 ring-slate-400' : 'hover:scale-105'
                     }`}
+                  style={{ backgroundColor: color }}
                 />
               ))}
             </div>

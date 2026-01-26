@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Pencil, Trash2, Layers } from 'lucide-react';
-import { inventoryService } from '../../services/inventoryService';
+import { Search, Plus, Pencil, Trash2, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
+import { inventoryService } from '../services/inventoryService';
 import DeleteConfirmModal from '../components/stock/DeleteConfirmModal';
+import Toast from '../components/common/Toast';
 
 interface Sector {
     id: string;
     nome: string;
     descricao?: string;
+    deletado?: string;
+    totalItens?: number;
 }
 
 interface SectorEditModalProps {
@@ -27,6 +30,11 @@ const SectorEditModal: React.FC<SectorEditModalProps> = ({ sector, onClose, onSa
             setFormData({
                 name: sector.nome || '',
                 description: sector.descricao || ''
+            });
+        } else {
+            setFormData({
+                name: '',
+                description: ''
             });
         }
     }, [sector]);
@@ -57,8 +65,6 @@ const SectorEditModal: React.FC<SectorEditModalProps> = ({ sector, onClose, onSa
             setLoading(false);
         }
     };
-
-    if (!sector && sector !== null) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
@@ -133,6 +139,10 @@ const SectorsPage: React.FC = () => {
     const [sectors, setSectors] = useState<Sector[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const itemsPerPage = 10;
+
     const [editModal, setEditModal] = useState<{ isOpen: boolean; sector: Sector | null }>({
         isOpen: false,
         sector: null
@@ -150,10 +160,12 @@ const SectorsPage: React.FC = () => {
         try {
             setLoading(true);
             const data = await inventoryService.listSectors();
-            setSectors(data);
+            // Filtrar apenas setores não deletados
+            const activeSectors = data.filter((s: Sector) => s.deletado !== 'yes');
+            setSectors(activeSectors);
         } catch (error) {
             console.error('Erro ao carregar setores:', error);
-            alert('Erro ao carregar setores');
+            setToast({ message: 'Erro ao carregar setores', type: 'error' });
         } finally {
             setLoading(false);
         }
@@ -175,18 +187,38 @@ const SectorsPage: React.FC = () => {
         if (!deleteModal.sector) return;
 
         try {
+            // Soft delete - marca como deletado
             await inventoryService.deleteSector(deleteModal.sector.id);
             setDeleteModal({ isOpen: false, sector: null });
+            setToast({ message: 'Setor excluído com sucesso!', type: 'success' });
             loadSectors();
         } catch (error) {
             console.error('Erro ao excluir setor:', error);
-            alert('Erro ao excluir setor');
+            setToast({ message: 'Erro ao excluir setor', type: 'error' });
         }
     };
 
+    const handleSaveSuccess = () => {
+        setToast({ message: 'Setor salvo com sucesso!', type: 'success' });
+        loadSectors();
+    };
+
+    // Filtrar setores
     const filteredSectors = sectors.filter(s =>
-        s.nome.toLowerCase().includes(searchTerm.toLowerCase())
+        s.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.descricao && s.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    // Paginação
+    const totalPages = Math.ceil(filteredSectors.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentSectors = filteredSectors.slice(startIndex, endIndex);
+
+    // Reset para página 1 quando filtrar
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     return (
         <div className="p-6 space-y-6">
@@ -196,8 +228,8 @@ const SectorsPage: React.FC = () => {
                         <Layers className="text-white" size={28} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-800">Setores</h1>
-                        <p className="text-sm text-slate-500">Gerencie os setores da organização</p>
+                        <h1 className="text-2xl font-bold text-slate-800">Setores de Estoque</h1>
+                        <p className="text-sm text-slate-500">Gestão de locais físicos e capacidades</p>
                     </div>
                 </div>
                 <button
@@ -214,7 +246,7 @@ const SectorsPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <h2 className="text-lg font-bold text-slate-700">Lista de Setores</h2>
                         <span className="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200">
-                            {filteredSectors.length} itens
+                            {filteredSectors.length} {filteredSectors.length === 1 ? 'item' : 'itens'}
                         </span>
                     </div>
 
@@ -235,6 +267,7 @@ const SectorsPage: React.FC = () => {
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Nome</th>
+                                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Produtos</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Descrição</th>
                                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Ações</th>
                             </tr>
@@ -246,20 +279,28 @@ const SectorsPage: React.FC = () => {
                                         Carregando setores...
                                     </td>
                                 </tr>
-                            ) : filteredSectors.length === 0 ? (
+                            ) : currentSectors.length === 0 ? (
                                 <tr>
                                     <td colSpan={3} className="px-6 py-12 text-center text-slate-400">
-                                        Nenhum setor encontrado
+                                        {searchTerm ? 'Nenhum setor encontrado com esse termo' : 'Nenhum setor cadastrado'}
                                     </td>
                                 </tr>
                             ) : (
-                                filteredSectors.map((sector) => (
+                                currentSectors.map((sector) => (
                                     <tr key={sector.id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <Layers size={16} className="text-blue-500" />
                                                 <span className="text-sm font-bold text-slate-700">{sector.nome}</span>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(sector.totalItens || 0) > 0
+                                                    ? 'bg-blue-50 text-blue-700'
+                                                    : 'bg-slate-100 text-slate-500'
+                                                }`}>
+                                                {sector.totalItens || 0} itens
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             {sector.descricao || '-'}
@@ -288,15 +329,45 @@ const SectorsPage: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Paginação */}
+                {totalPages > 1 && (
+                    <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                        <div className="text-sm text-slate-500">
+                            Mostrando {startIndex + 1} a {Math.min(endIndex, filteredSectors.length)} de {filteredSectors.length} setores
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <span className="text-sm font-medium text-slate-600">
+                                Página {currentPage} de {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {editModal.isOpen && (
-                <SectorEditModal
-                    sector={editModal.sector}
-                    onClose={() => setEditModal({ isOpen: false, sector: null })}
-                    onSave={loadSectors}
-                />
-            )}
+            {
+                editModal.isOpen && (
+                    <SectorEditModal
+                        sector={editModal.sector}
+                        onClose={() => setEditModal({ isOpen: false, sector: null })}
+                        onSave={handleSaveSuccess}
+                    />
+                )
+            }
 
             <DeleteConfirmModal
                 isOpen={deleteModal.isOpen}
@@ -304,7 +375,17 @@ const SectorsPage: React.FC = () => {
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => setDeleteModal({ isOpen: false, sector: null })}
             />
-        </div>
+
+            {
+                toast && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
+                )
+            }
+        </div >
     );
 };
 

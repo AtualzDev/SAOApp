@@ -19,6 +19,7 @@ const userRoutes = require('./routes/users');
 app.use('/api/health', healthRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/inventory', require('./routes/inventory'));
+app.use('/api/baskets', require('./routes/baskets'));
 
 app.get('/', (req, res) => {
     res.send('SAO Backend is running');

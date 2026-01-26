@@ -29,6 +29,13 @@ router.delete('/categories/:id', inventoryController.deleteCategory);
 router.get('/suppliers', inventoryController.listSuppliers);
 router.post('/suppliers', inventoryController.createSupplier);
 
+// Baskets
+router.get('/baskets', inventoryController.listBaskets);
+router.post('/baskets', inventoryController.createBasket);
+router.get('/baskets/:id', inventoryController.getBasket);
+router.put('/baskets/:id', inventoryController.updateBasket);
+router.delete('/baskets/:id', inventoryController.deleteBasket);
+
 // Transactions Lists
 router.get('/transactions', inventoryController.listTransactions);
 router.get('/entries', inventoryController.listEntries);

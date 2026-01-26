@@ -77,6 +77,7 @@ export interface Transaction {
         produto: { nome: string };
         quantidade: number;
         valor_unitario?: number;
+        validade?: string; // Add validity
     }[];
 }
 
@@ -240,6 +241,19 @@ export const inventoryService = {
         return response.json();
     },
 
+    // --- Baskets (Cestas) ---
+    async listBaskets(): Promise<any[]> {
+        const response = await fetch(`${API_URL}/baskets`);
+        if (!response.ok) throw new Error('Failed to fetch baskets');
+        return response.json();
+    },
+
+    async getBasket(id: string): Promise<any> {
+        const response = await fetch(`${API_URL}/baskets/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch basket');
+        return response.json();
+    },
+
     async getEntry(id: string): Promise<any> {
         const response = await fetch(`${API_URL}/entries/${id}`);
         if (!response.ok) throw new Error('Failed to fetch entry');
@@ -345,7 +359,7 @@ export const inventoryService = {
     },
 
     async createLaunch(launch: LaunchData): Promise<any> {
-        const EXIT_TYPES = ['Uso Interno', 'Perda', 'Troca', 'Doação (Saída)', 'Saída', 'Venda'];
+        const EXIT_TYPES = ['Uso Interno', 'Perda', 'Troca', 'Doação (Saída)', 'Saída', 'Venda', 'Cesta'];
         if (EXIT_TYPES.includes(launch.type)) {
             return this.createExit(launch);
         } else {
@@ -354,7 +368,7 @@ export const inventoryService = {
     },
 
     async updateLaunch(id: string, launch: LaunchData): Promise<any> {
-        const EXIT_TYPES = ['Uso Interno', 'Perda', 'Troca', 'Doação (Saída)', 'Saída', 'Venda'];
+        const EXIT_TYPES = ['Uso Interno', 'Perda', 'Troca', 'Doação (Saída)', 'Saída', 'Venda', 'Cesta'];
         if (EXIT_TYPES.includes(launch.type)) {
             return this.updateExit(id, launch);
         } else {

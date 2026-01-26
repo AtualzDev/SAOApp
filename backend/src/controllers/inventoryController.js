@@ -649,7 +649,7 @@ const inventoryController = {
         try {
             // Map frontend specific types to DB types if necessary
             let dbType = type;
-            if (type === 'Doação (Saída)') dbType = 'Doação';
+            if (type === 'Doação (Saída)' || type === 'Cesta') dbType = 'Doação';
 
             // 1. Create Header
             const headerData = {
@@ -726,7 +726,7 @@ const inventoryController = {
 
             // 3. Update Header
             let dbType = type;
-            if (type === 'Doação (Saída)') dbType = 'Doação';
+            if (type === 'Doação (Saída)' || type === 'Cesta') dbType = 'Doação';
 
             // Sanitize status
             const VALID_EXIT_STATUSES = ['Pendente', 'Concluído', 'Cancelado'];
@@ -819,6 +819,141 @@ const inventoryController = {
             if (error) throw error;
             res.json(data);
         } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // --- Baskets (Cestas) ---
+
+    async listBaskets(req, res) {
+        try {
+            const { data, error } = await supabase
+                .from('cestas')
+                .select('*, items:cestas_itens(count)')
+                .order('nome');
+
+            if (error) throw error;
+
+            const transformed = data.map(b => ({
+                ...b,
+                itemCount: b.items ? b.items[0]?.count : 0
+            }));
+
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async getBasket(req, res) {
+        const { id } = req.params;
+        try {
+            const { data, error } = await supabase
+                .from('cestas')
+                .select('*, items:cestas_itens(*, produto:produtos(nome, unidade_medida, estoque_atual))')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            res.json(data);
+        } catch (error) {
+            console.error('Error fetching basket:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async createBasket(req, res) {
+        const { nome, descricao, items } = req.body;
+        // items: [{ productId, quantity }]
+
+        try {
+            // 1. Create Header
+            const { data: basket, error: basketError } = await supabase
+                .from('cestas')
+                .insert([{ nome, descricao }])
+                .select()
+                .single();
+
+            if (basketError) throw basketError;
+
+            // 2. Create Items
+            if (items && items.length > 0) {
+                const preparedItems = items.map(i => ({
+                    cesta_id: basket.id,
+                    produto_id: i.productId,
+                    quantidade: i.quantity
+                }));
+
+                const { error: itemsError } = await supabase
+                    .from('cestas_itens')
+                    .insert(preparedItems);
+
+                if (itemsError) throw itemsError;
+            }
+
+            res.status(201).json(basket);
+        } catch (error) {
+            console.error('Error creating basket:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async updateBasket(req, res) {
+        const { id } = req.params;
+        const { nome, descricao, items } = req.body;
+
+        try {
+            // 1. Update Header
+            const { error: updateError } = await supabase
+                .from('cestas')
+                .update({ nome, descricao })
+                .eq('id', id);
+
+            if (updateError) throw updateError;
+
+            // 2. Update Items (Replace)
+            // Delete old
+            const { error: deleteError } = await supabase
+                .from('cestas_itens')
+                .delete()
+                .eq('cesta_id', id);
+
+            if (deleteError) throw deleteError;
+
+            // Insert new
+            if (items && items.length > 0) {
+                const preparedItems = items.map(i => ({
+                    cesta_id: id,
+                    produto_id: i.productId,
+                    quantidade: i.quantity
+                }));
+
+                const { error: itemsError } = await supabase
+                    .from('cestas_itens')
+                    .insert(preparedItems);
+
+                if (itemsError) throw itemsError;
+            }
+
+            res.json({ message: 'Basket updated successfully' });
+        } catch (error) {
+            console.error('Error updating basket:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async deleteBasket(req, res) {
+        const { id } = req.params;
+        try {
+            const { error } = await supabase
+                .from('cestas')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            res.json({ message: 'Basket deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting basket:', error);
             res.status(500).json({ error: error.message });
         }
     },

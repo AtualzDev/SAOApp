@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Pencil, Plus, Trash2, Save, X, FileText, Check, Search, PackageMinus, MapPin, User, FileWarning } from 'lucide-react';
+import { Pencil, Plus, Trash2, Save, X, FileText, Check, Search, PackageMinus, MapPin, User, FileWarning, ShoppingBasket } from 'lucide-react';
 import UnitSelectionModal from './UnitSelectionModal';
 import AddCategoryModal from './AddCategoryModal';
 import SupplierSelectionModal from './SupplierSelectionModal';
 import ProductSearchInput from './ProductSearchInput';
+import BasketSearchInput from './BasketSearchInput'; // Import
 import AddSimpleModal from './AddSimpleModal';
 import Toast from '../common/Toast';
+import DonationReceiptModal from './DonationReceiptModal'; // Import Receipt Modal
 import { inventoryService, Product, Transaction } from '../../services/inventoryService';
 
 interface ExitFormProps {
@@ -30,7 +32,13 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [sectors, setSectors] = useState<any[]>([]);
+  const [baskets, setBaskets] = useState<any[]>([]); // Baskets list
+  const [selectedBasketId, setSelectedBasketId] = useState(''); // Selected Basket
   const [selectedSectorId, setSelectedSectorId] = useState('');
+
+  // Receipt Data State
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
 
   // Item Line State
   const [items, setItems] = useState<any[]>(initialData?.items.map(i => ({
@@ -64,6 +72,11 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
       .then(setSectors)
       .catch(console.error);
 
+    // Load Baskets
+    inventoryService.listBaskets()
+      .then(setBaskets)
+      .catch(console.error);
+
     // Load products
     inventoryService.listProducts()
       .then(prodList => {
@@ -78,6 +91,38 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
       })
       .catch(console.error);
   }, []);
+
+  // Handle Basket Selection
+  const handleBasketChange = async (basket: any) => {
+    setSelectedBasketId(basket.id);
+    if (!basket.id) return;
+
+    try {
+      const fullBasket = await inventoryService.getBasket(basket.id);
+      if (fullBasket && fullBasket.items) {
+        // Map basket items to form items
+        const newItems = fullBasket.items.map((bi: any) => {
+          const prod = products.find(p => p.id === bi.produto_id);
+          return {
+            id: Math.random(),
+            productId: bi.produto_id,
+            productName: prod?.nome || bi.produto?.nome || 'Item desconhecido',
+            quantity: bi.quantidade,
+            stock: prod?.estoque_atual || 0,
+            unit: prod?.unidade_medida || bi.produto?.unidade_medida || 'UN',
+            obs: ''
+          };
+        });
+
+        setItems(newItems);
+        setDestination('Doação de Cesta'); // Auto-set destination
+        setToast({ message: `Itens da cesta "${basket.nome}" carregados!`, type: 'success' });
+      }
+    } catch (error) {
+      console.error("Error loading basket:", error);
+      setToast({ message: 'Erro ao carregar cesta', type: 'error' });
+    }
+  };
 
   const handleAddItem = () => {
     if ((!currentItem.productId && !currentItem.productName.trim())) {
@@ -173,11 +218,26 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
     };
 
     try {
-      if (initialData && initialData.id) {
-        await inventoryService.updateLaunch(initialData.id, launchData);
-      } else {
-        await inventoryService.createLaunch(launchData);
+      const result = initialData && initialData.id
+        ? await inventoryService.updateLaunch(initialData.id, launchData)
+        : await inventoryService.createLaunch(launchData);
+
+      // Prepare Receipt Data
+      if (typeToSend === 'Doação' || typeToSend === 'Doação (Saída)' || exitType === 'Cesta') {
+        setReceiptData({
+          id: result.id || launchId,
+          beneficiary: requester,
+          date: exitDate,
+          destination: destination,
+          items: items.map(i => ({
+            productName: i.productName,
+            quantity: i.quantity,
+            unit: i.unit
+          })),
+          notes: notes
+        });
       }
+
       setIsSuccessModalOpen(true);
     } catch (e: any) {
       alert("Erro ao salvar saída: " + e.message);
@@ -217,8 +277,23 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
             <option value="Perda">Perda / Avaria</option>
             <option value="Troca">Troca</option>
             <option value="Doação (Saída)">Doação</option>
+            <option value="Cesta">Doação (Cesta)</option>
           </select>
         </div>
+
+        {/* Cesta Selection (Visible only if type is Cesta) */}
+        {exitType === 'Cesta' && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+            <label className="text-xs font-bold text-rose-600 uppercase flex items-center gap-1">
+              <ShoppingBasket size={14} /> Selecione a Cesta
+            </label>
+            <BasketSearchInput
+              baskets={baskets}
+              onSelect={handleBasketChange}
+              selectedBasketId={selectedBasketId}
+            />
+          </div>
+        )}
 
         {/* Destino */}
         <div className="space-y-2">
@@ -245,7 +320,7 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
         {/* Solicitante / Assistido */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-500 uppercase">
-            {exitType === 'Doação' || exitType === 'Doação (Saída)' ? 'Nome do Assistido' : 'Solicitante'}
+            {exitType === 'Doação' || exitType === 'Doação (Saída)' || exitType === 'Cesta' ? 'Nome do Assistido' : 'Solicitante'}
           </label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -253,11 +328,11 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
               type="text"
               value={requester}
               onChange={(e) => setRequester(e.target.value)}
-              placeholder={exitType === 'Doação' || exitType === 'Doação (Saída)' ? "Nome do beneficiário..." : "Quem solicitou/retirou?"}
+              placeholder={exitType === 'Doação' || exitType === 'Doação (Saída)' || exitType === 'Cesta' ? "Nome do beneficiário..." : "Quem solicitou/retirou?"}
               className="w-full h-11 pl-10 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all"
             />
             {/* Visual Indicator for Donation */}
-            {(exitType === 'Doação' || exitType === 'Doação (Saída)') && (
+            {(exitType === 'Doação' || exitType === 'Doação (Saída)' || exitType === 'Cesta') && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <span className="text-[10px] lowercase bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full font-bold">assistido</span>
               </div>
@@ -268,10 +343,20 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
 
       {/* Item Input Area */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-          <PackageMinus size={16} className="text-rose-500" />
-          Adicionar Produtos
-        </h3>
+        {exitType === 'Cesta' ? (
+          <div className="items-center justify-between flex mb-2">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <ShoppingBasket size={20} className="text-rose-500" />
+              Itens da Cesta
+            </h3>
+            {/* You could add a button here to "Add Extra Item" if needed, but keeping it simple */}
+          </div>
+        ) : (
+          <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <PackageMinus size={16} className="text-rose-500" />
+            Adicionar Produtos
+          </h3>
+        )}
 
         <div className="bg-white p-4 rounded-xl border border-rose-100 shadow-sm flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1 w-full space-y-2">
@@ -392,9 +477,19 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
               <h2 className="text-xl font-bold text-slate-800">Saída registrada!</h2>
               <p className="text-sm text-slate-500 mt-2">O estoque foi atualizado com sucesso.</p>
             </div>
-            <button onClick={() => { setIsSuccessModalOpen(false); onCancel(); }} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800">
-              Voltar para a lista
-            </button>
+            <div className="flex flex-col gap-2 w-full">
+              {receiptData && (
+                <button
+                  onClick={() => { setShowReceipt(true); }} // Keep success modal open or close? Usually good to keep open or allow print from here.
+                  className="w-full py-3 bg-white border-2 border-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-50 flex items-center justify-center gap-2"
+                >
+                  <FileText size={18} /> Imprimir Comprovante
+                </button>
+              )}
+              <button onClick={() => { setIsSuccessModalOpen(false); onCancel(); }} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800">
+                Voltar para a lista
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -404,6 +499,14 @@ const ExitForm: React.FC<ExitFormProps> = ({ onCancel, initialData }) => {
           message={toast.message}
           type={toast.type}
           onClose={() => setToast(null)}
+        />
+      )}
+      {/* Receipt Modal */}
+      {showReceipt && receiptData && (
+        <DonationReceiptModal
+          isOpen={showReceipt}
+          onClose={() => setShowReceipt(false)}
+          data={receiptData}
         />
       )}
     </div>

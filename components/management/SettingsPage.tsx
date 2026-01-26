@@ -10,6 +10,7 @@ import {
   Briefcase, MapPin, Car, Trash2, Lock, Download, Filter, ShoppingBasket, Activity,
   Truck, UserX, CalendarDays, Palette, Stamp, FileBadge
 } from 'lucide-react';
+import BasketsTab from './tabs/BasketsTab';
 
 type SettingsTab = 'conta' | 'agenda' | 'cestas' | 'cid' | 'fornecedores' | 'usuarios' | 'whatsapp' | 'logs';
 type AccountSubTab = 'dados_ong' | 'personalizacao' | 'documentos' | 'comunicacao';
@@ -23,12 +24,7 @@ interface UserData {
   avatar?: string;
 }
 
-interface BasketData {
-  id: string;
-  nome: string;
-  total: number;
-  qtdItens: number;
-}
+
 
 interface CIDData {
   id: string;
@@ -174,11 +170,7 @@ const SettingsPage: React.FC = () => {
   ]);
 
 
-  const [baskets] = useState<BasketData[]>([
-    { id: '1', nome: 'Cesta básica', total: 35, qtdItens: 16 },
-    { id: '2', nome: 'Cesta de Natal', total: 55, qtdItens: 16 },
-    { id: '3', nome: 'Kit higiene', total: 10, qtdItens: 2 },
-  ]);
+
 
   const [cidList] = useState<CIDData[]>([
     { id: '1', codigo: 'C71', descricao: 'Neoplasia maligna do encéfalo' },
@@ -1453,74 +1445,7 @@ const SettingsPage: React.FC = () => {
     </div>
   );
 
-  const renderBasketsTab = () => (
-    <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
-      <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-slate-800">Lista de Cestas</h2>
-          <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
-            {baskets.length} Cadastrados
-          </span>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
-            <input
-              type="text"
-              placeholder="Buscar produto"
-              className="w-full h-11 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 transition-all"
-            />
-          </div>
-          <button className="w-full sm:w-auto px-10 py-3 bg-[#1E40AF] text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 hover:bg-blue-800 transition-all active:scale-95 whitespace-nowrap">
-            + Nova Cesta
-          </button>
-        </div>
-      </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-              <th className="px-8 py-5">NOME DA CESTA</th>
-              <th className="px-8 py-5 text-center">TOTAL DE CESTAS</th>
-              <th className="px-8 py-5 text-center">QUANT. DE ITENS</th>
-              <th className="px-8 py-5 text-right">AÇÃO</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {baskets.map((basket) => (
-              <tr key={basket.id} className="hover:bg-slate-50/50 transition-colors group">
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-50 text-slate-400 rounded-lg group-hover:text-blue-500 group-hover:bg-blue-50 transition-colors">
-                      <ShoppingBasket size={18} />
-                    </div>
-                    <span className="text-sm font-bold text-slate-700">{basket.nome}</span>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-center">
-                  <span className="text-sm font-bold text-slate-600">{basket.total}</span>
-                </td>
-                <td className="px-8 py-5 text-center">
-                  <span className="text-sm font-bold text-slate-600">{basket.qtdItens}</span>
-                </td>
-                <td className="px-8 py-5 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button className="p-2 text-blue-400 hover:text-blue-600 transition-colors">
-                      <Pencil size={18} />
-                    </button>
-                    <button className="p-2 text-rose-400 hover:text-rose-600 transition-colors">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
 
   const renderCidTab = () => (
     <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in duration-500">
@@ -1839,7 +1764,7 @@ const SettingsPage: React.FC = () => {
       <div className="mt-8">
         {activeTab === 'conta' && renderAccountTab()}
         {activeTab === 'agenda' && renderAgendaTab()}
-        {activeTab === 'cestas' && renderBasketsTab()}
+        {activeTab === 'cestas' && <BasketsTab />}
         {activeTab === 'cid' && renderCidTab()}
         {activeTab === 'fornecedores' && renderSuppliersTab()}
         {activeTab === 'usuarios' && renderUsersTab()}

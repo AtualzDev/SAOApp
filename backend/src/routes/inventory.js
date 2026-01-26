@@ -29,10 +29,21 @@ router.delete('/categories/:id', inventoryController.deleteCategory);
 router.get('/suppliers', inventoryController.listSuppliers);
 router.post('/suppliers', inventoryController.createSupplier);
 
-// Transactions
+// Transactions Lists
 router.get('/transactions', inventoryController.listTransactions);
-router.post('/transactions', inventoryController.createLaunch);
-router.post('/launch', inventoryController.createLaunch);
-router.put('/launch/:id', inventoryController.updateLaunch);
+router.get('/entries', inventoryController.listEntries);
+router.get('/exits', inventoryController.listExits);
+
+// Entries (Individual)
+router.post('/entries', inventoryController.createEntry);
+router.get('/entries/:id', inventoryController.getEntry);
+router.put('/entries/:id', inventoryController.updateEntry);
+router.delete('/entries/:id', inventoryController.deleteEntry);
+
+// Exits (Individual)
+router.post('/exits', inventoryController.createExit);
+router.get('/exits/:id', inventoryController.getExit);
+router.put('/exits/:id', inventoryController.updateExit);
+router.delete('/exits/:id', inventoryController.deleteExit);
 
 module.exports = router;

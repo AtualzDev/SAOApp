@@ -18,7 +18,8 @@ const LaunchTable: React.FC<LaunchTableProps> = ({ onEdit }) => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const data = await inventoryService.listTransactions();
+      // Fetch only ENTRIES (Lançamentos/Entradas)
+      const data = await inventoryService.listEntries();
       setTransactions(data);
       setError('');
     } catch (err: any) {

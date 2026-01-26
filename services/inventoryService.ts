@@ -61,14 +61,22 @@ export interface Transaction {
     data_lancamento?: string; // or created_at
     created_at: string;
     data_recebimento?: string;
+    // Entry fields
     fornecedor?: string;
     instituicao_beneficiada?: string;
-    valor_total: number;
+    valor_total?: number;
+    numero_nota?: string;
+    // Exit fields
+    data_saida?: string;
+    destino_local?: string;
+    solicitante_ou_assistido?: string;
+    setor_id?: string;
+    // Items
     items: {
         id: string;
         produto: { nome: string };
         quantidade: number;
-        valor_unitario: number;
+        valor_unitario?: number;
     }[];
 }
 
@@ -225,29 +233,140 @@ export const inventoryService = {
         return response.json();
     },
 
-    async createLaunch(launch: LaunchData): Promise<any> {
-        const response = await fetch(`${API_URL}/launch`, {
+    // --- Entries (Lançamentos) ---
+    async listEntries(): Promise<any[]> {
+        const response = await fetch(`${API_URL}/entries`);
+        if (!response.ok) throw new Error('Failed to fetch entries');
+        return response.json();
+    },
+
+    async getEntry(id: string): Promise<any> {
+        const response = await fetch(`${API_URL}/entries/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch entry');
+        return response.json();
+    },
+
+    async createEntry(launch: LaunchData): Promise<any> {
+        const response = await fetch(`${API_URL}/entries`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(launch),
         });
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create launch');
+            throw new Error(errorData.error || 'Failed to create entry');
         }
         return response.json();
     },
 
-    async updateLaunch(id: string, launch: LaunchData): Promise<any> {
-        const response = await fetch(`${API_URL}/launch/${id}`, {
+    async updateEntry(id: string, launch: LaunchData): Promise<any> {
+        const response = await fetch(`${API_URL}/entries/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(launch),
         });
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to update launch');
+            throw new Error(errorData.error || 'Failed to update entry');
         }
         return response.json();
+    },
+
+    async deleteEntry(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/entries/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete entry');
+    },
+
+    // --- Exits (Saídas) ---
+    async listExits(): Promise<any[]> {
+        const response = await fetch(`${API_URL}/exits`);
+        if (!response.ok) throw new Error('Failed to fetch exits');
+        return response.json();
+    },
+
+    async getExit(id: string): Promise<any> {
+        const response = await fetch(`${API_URL}/exits/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch exit');
+        return response.json();
+    },
+
+    async createExit(launch: LaunchData): Promise<any> {
+        const response = await fetch(`${API_URL}/exits`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(launch),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create exit');
+        }
+        return response.json();
+    },
+
+    async updateExit(id: string, launch: LaunchData): Promise<any> {
+        const response = await fetch(`${API_URL}/exits/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(launch),
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to update exit');
+        }
+        return response.json();
+    },
+
+    async deleteExit(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/exits/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete exit');
+    },
+
+    // --- Legacy / Adapter Methods (to support existing UI until refactored) ---
+    // These methods decide which endpoint to call based on the 'type' or context
+
+    async getLaunch(id: string, category?: 'entry' | 'exit'): Promise<any> {
+        // Since we don't know checking entry first then exit is what backend used to do.
+        // But backend doesn't support generic getLaunch anymore.
+        // Frontend must pass category hint if possible, or we try both.
+        // Attempting Entry first
+        try {
+            const response = await fetch(`${API_URL}/entries/${id}`);
+            if (response.ok) return response.json();
+        } catch (e) { }
+
+        // If not entry, try exit
+        const responseExit = await fetch(`${API_URL}/exits/${id}`);
+        if (!responseExit.ok) throw new Error('Launch not found in entries or exits');
+        return responseExit.json();
+    },
+
+    async createLaunch(launch: LaunchData): Promise<any> {
+        const EXIT_TYPES = ['Uso Interno', 'Perda', 'Troca', 'Doação (Saída)', 'Saída', 'Venda'];
+        if (EXIT_TYPES.includes(launch.type)) {
+            return this.createExit(launch);
+        } else {
+            return this.createEntry(launch);
+        }
+    },
+
+    async updateLaunch(id: string, launch: LaunchData): Promise<any> {
+        const EXIT_TYPES = ['Uso Interno', 'Perda', 'Troca', 'Doação (Saída)', 'Saída', 'Venda'];
+        if (EXIT_TYPES.includes(launch.type)) {
+            return this.updateExit(id, launch);
+        } else {
+            return this.updateEntry(id, launch);
+        }
+    },
+
+    async deleteLaunch(id: string, category: 'entry' | 'exit'): Promise<void> {
+        if (category === 'exit') {
+            return this.deleteExit(id);
+        } else {
+            return this.deleteEntry(id);
+        }
     }
 };
